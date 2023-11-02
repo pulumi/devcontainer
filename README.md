@@ -4,7 +4,7 @@
 
 This repository is designed with deep [VS Code](https://code.visualstudio.com) integration to automate Pulumi IaC and Provider development dependencies and prerequisites as much as possible using [Dev Containers](https://containers.dev/)) to prepare your development environment, or even just run your development directly in the browser with [Github CodeSpaces](https://github.com/features/codespaces).
 
-![CodeSpaces Screenshot](./assets/codespaces.png)
+![CodeSpaces Screenshot](./.github/assets/codespaces.png)
 
 # Getting Started
 
@@ -30,7 +30,7 @@ After the submodule is added, you can open your project in VS Code and it will a
 # Github CodeSpaces
 
 > Fig 1. How to open project in CodeSpaces
-![How to open repository in CodeSpaces](./assets/gh-open-codespaces.png)
+![How to open repository in CodeSpaces](./.github/assets/gh-open-codespaces.png)
 
 # VS Code Dev Container
 
@@ -45,5 +45,5 @@ pulumi login
 ```
 
 > Fig 2.b pulumi login
-![Pulumi login](./assets/pulumi-login.png)
-![Pulumi login complete](./assets/pulumi-login-complete.png)
+![Pulumi login](./.github/assets/pulumi-login.png)
+![Pulumi login complete](./.github/assets/pulumi-login-complete.png)
