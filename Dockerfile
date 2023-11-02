@@ -1,13 +1,10 @@
 # Build Container:
 # - docker build -t ghcr.io/pulumi/devcontainer -f Dockerfile .
 #
-# Build Provider:
-# - docker run -it --rm -v $PWD:/workspace ghcr.io/pulumi/devcontainer
-#
 # Run Container:
-# - docker run -it --rm -v $PWD:/workspace --entrypoint bash ghcr.io/pulumi/devcontainer
+# - docker run -it --rm -v $PWD:/workspaces ghcr.io/pulumi/devcontainer
 
-FROM docker.io/library/ubuntu:22.04
+FROM mcr.microsoft.com/devcontainers/base:ubuntu-22.04
 
 ARG PIP_PKGS="\
 setuptools \
@@ -49,19 +46,21 @@ ENV TZ=UTC
 ENV DEBIAN_FRONTEND=noninteractive
 # Add go and nix to path
 ENV PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/usr/local/go/bin:/nix/var/nix/profiles/default/bin"
+# Default to MS FROM image builtin user
+USER vscode
 
 # Install apt & pip packages
 RUN set -ex \
-    && apt-get update \
-    && apt-get install ${APT_PKGS} \
-    && update-alternatives --install \
+    && sudo apt-get update \
+    && sudo apt-get install ${APT_PKGS} \
+    && sudo update-alternatives --install \
         /usr/bin/python python \
         /usr/bin/python3 1 \
-    && python3 -m pip install ${PIP_PKGS} \
-    && apt-get clean \
-    && apt-get autoremove -y \
-    && apt-get purge -y --auto-remove \
-    && rm -rf \
+    && sudo python3 -m pip install ${PIP_PKGS} \
+    && sudo apt-get clean \
+    && sudo apt-get autoremove -y \
+    && sudo apt-get purge -y --auto-remove \
+    && sudo rm -rf \
         /var/lib/{apt,dpkg,cache,log} \
         /usr/share/{doc,man,locale} \
         /var/cache/apt \
@@ -74,7 +73,7 @@ RUN set -ex \
 RUN set -ex \
     && export arch=$(uname -m | awk '{ if ($1 == "x86_64") print "amd64"; else if ($1 == "aarch64" || $1 == "arm64") print "arm64"; else print "unknown" }') \
     && export goversion="$(curl -s https://go.dev/dl/?mode=json | awk -F'[":go]' '/  "version"/{print $8}' | head -n1)" \
-    && curl -L https://go.dev/dl/go${goversion}.linux-${arch}.tar.gz | tar -C /usr/local/ -xzvf - \
+    && curl -L https://go.dev/dl/go${goversion}.linux-${arch}.tar.gz | sudo tar -C /usr/local/ -xzvf - \
     && which go \
     && go version \
     && for pkg in ${GO_PKGS}; do go install ${pkg}; echo "Installed: ${pkg}"; done \
@@ -84,15 +83,15 @@ RUN set -ex \
 RUN set -ex \
     && export NODE_MAJOR=20 \
     && curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key \
-        | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg \
+        | sudo gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg \
     && echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" \
-        | tee /etc/apt/sources.list.d/nodesource.list \
-    && apt-get update \
-    && apt-get install nodejs \
-    && apt-get clean \
-    && apt-get autoremove -y \
-    && apt-get purge -y --auto-remove \
-    && rm -rf \
+        | sudo tee /etc/apt/sources.list.d/nodesource.list \
+    && sudo apt-get update \
+    && sudo apt-get install nodejs \
+    && sudo apt-get clean \
+    && sudo apt-get autoremove -y \
+    && sudo apt-get purge -y --auto-remove \
+    && sudo rm -rf \
         /var/lib/{apt,dpkg,cache,log} \
         /usr/share/{doc,man,locale} \
         /var/cache/apt \
@@ -101,7 +100,7 @@ RUN set -ex \
         /tmp/* \
     && node --version \
     && npm --version \
-    && npm install --global yarn \
+    && sudo npm install --global yarn \
     && yarn --version \
     && true
 
@@ -125,7 +124,7 @@ RUN set -ex \
     && export urlPulumiBin="pulumi-v${urlPulumiVersion}-linux-${arch}.tar.gz" \
     && export urlPulumi="${urlPulumiBase}/v${urlPulumiVersion}/${urlPulumiBin}" \
     && curl -L ${urlPulumi} | tar xzvf - --directory /tmp \
-    && mv /tmp/pulumi/* /usr/local/bin/ \
+    && sudo mv /tmp/pulumi/* /usr/local/bin/ \
     && rm -rf /tmp/pulumi \
     && which pulumi \
     && pulumi version \
@@ -140,7 +139,7 @@ RUN set -ex \
     && export urlPulumiBin="esc-v${urlPulumiVersion}-linux-${arch}.tar.gz" \
     && export urlPulumi="${urlPulumiBase}/v${urlPulumiVersion}/${urlPulumiBin}" \
     && curl -L ${urlPulumi} | tar xzvf - --directory /tmp \
-    && mv /tmp/esc/esc /usr/local/bin/esc \
+    && sudo mv /tmp/esc/esc /usr/local/bin/esc \
     && rm -rf /tmp/esc \
     && which esc \
     && esc version \
@@ -155,7 +154,7 @@ RUN set -ex \
     && export urlPulumiBin="pulumictl-v${urlPulumiVersion}-linux-${arch}.tar.gz" \
     && export urlPulumi="${urlPulumiBase}/v${urlPulumiVersion}/${urlPulumiBin}" \
     && curl -L ${urlPulumi} | tar xzvf - --directory /tmp \
-    && mv /tmp/pulumictl /usr/local/bin/ \
+    && sudo mv /tmp/pulumictl /usr/local/bin/ \
     && rm -rf /tmp/* \
     && which pulumictl \
     && pulumictl version \
@@ -169,8 +168,8 @@ RUN set -ex \
     && export urlKindBase="https://github.com/kubernetes-sigs/kind/releases/download" \
     && export urlKindBin="kind-linux-${arch}" \
     && export urlKind="${urlKindBase}/v${urlKindVersion}/${urlKindBin}" \
-    && curl -L ${urlKind} --output /usr/local/bin/kind \
-    && chmod +x /usr/local/bin/kind \
+    && sudo curl -L ${urlKind} --output /usr/local/bin/kind \
+    && sudo chmod +x /usr/local/bin/kind \
     && which kind \
     && kind version \
     && true
@@ -180,8 +179,8 @@ RUN set -ex \
     && export arch=$(uname -m | awk '{ if ($1 == "x86_64") print "amd64"; else if ($1 == "aarch64" || $1 == "arm64") print "arm64"; else print "unknown" }') \
     && export varKubectlVersion="$(curl --silent -L https://storage.googleapis.com/kubernetes-release/release/stable.txt | sed 's/v//g')" \
     && export varKubectlUrl="https://storage.googleapis.com/kubernetes-release/release/v${varKubectlVersion}/bin/linux/${arch}/kubectl" \
-    && curl -L ${varKubectlUrl} --output /usr/local/bin/kubectl \
-    && chmod +x /usr/local/bin/kubectl \
+    && sudo curl -L ${varKubectlUrl} --output /usr/local/bin/kubectl \
+    && sudo chmod +x /usr/local/bin/kubectl \
     && kubectl version --client || exit 1 \
     && true
 
@@ -190,14 +189,14 @@ RUN set -ex \
     && export varVerHelm="$(curl -s https://api.github.com/repos/helm/helm/releases/latest | awk -F '[\"v,]' '/tag_name/{print $5}')" \
     && export varUrlHelm="https://get.helm.sh/helm-v${varVerHelm}-linux-amd64.tar.gz" \
     && curl -L ${varUrlHelm} | tar xzvf - --directory /tmp linux-amd64/helm \
-    && mv /tmp/linux-amd64/helm /usr/local/bin/helm \
-    && chmod +x /usr/local/bin/helm \
-    && helm version \
+    && sudo mv /tmp/linux-amd64/helm /usr/local/bin/helm \
+    && sudo chmod +x /usr/local/bin/helm \
     && rm -rf /tmp/linux-amd64 \
+    && helm version \
     && true
 
 WORKDIR /workspaces
-CMD ["make", "build"]
+CMD ["/usr/bin/zsh"]
 
 # GHCR Labels
 LABEL org.opencontainers.image.licenses="APACHE2"
@@ -217,4 +216,3 @@ LABEL \
     org.opencontainers.image.url="https://github.com/pulumi/devcontainer" \
     org.opencontainers.image.documentation="https://github.com/pulumi/devcontainer" \
     org.opencontainers.image.authors="https://github.com/pulumi"
-
