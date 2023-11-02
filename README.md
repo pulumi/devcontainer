@@ -1,6 +1,6 @@
 # Pulumi Dev Container
 
-### ghcr.io/pulumi/devcontainer
+### [![ghcr.io/pulumi/devcontainer](https://github.com/pulumi/devcontainer/actions/workflows/build.yaml/badge.svg?branch=main)](https://github.com/pulumi/devcontainer/actions/workflows/build.yaml)
 
 This repository is designed with deep [VS Code](https://code.visualstudio.com) integration to automate Pulumi IaC and Provider development dependencies and prerequisites as much as possible using [Dev Containers](https://containers.dev/)) to prepare your development environment, or even just run your development directly in the browser with [Github CodeSpaces](https://github.com/features/codespaces).
 
