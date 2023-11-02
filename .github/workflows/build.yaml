@@ -1,0 +1,50 @@
+name: devcontainer
+on:
+    push:
+        branches:
+        - master
+        paths-ignore:
+        - '.devcontainer/**'
+        - '.vscode/**'
+        - '**.md'
+    pull_request:
+        branches:
+        - master
+        paths-ignore:
+        - '.devcontainer/**'
+        - '.vscode/**'
+        - '**.md'
+    schedule:
+        - cron: '0 0 * * *'
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        permissions:
+            contents: read
+            packages: write
+            actions: write
+
+        steps:
+        -
+            name: Git Checkout
+            uses: actions/checkout@v4
+            id: git
+        -
+            name: Set up QEMU
+            uses: docker/setup-qemu-action@v3
+            id: qemu
+        -
+            name: Set up Docker Buildx
+            uses: docker/setup-buildx-action@v3
+            id: buildx
+        -
+            name: Build & Publish Dev Container
+            id: docker
+            uses: docker/build-push-action@v5
+            with:
+                push: true
+                context: .
+                file: Dockerfile
+                platforms: linux/amd64,linux/arm64
+                tags: 'pulumi/devcontainer:latest'

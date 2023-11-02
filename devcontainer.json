@@ -1,0 +1,51 @@
+// Reference:
+// - https://containers.dev/features
+// - https://containers.dev/implementors/features
+// - https://code.visualstudio.com/docs/getstarted/settings
+{
+  "name": "pulumi",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": "."
+  },
+  "customizations": {
+    "vscode": {
+      "settings": [
+        "go.testTags", "all",
+        "go.buildTags", "all",
+        "editor.minimap.enabled", false,
+        "explorer.openEditors.visible", 1,
+        "editor.quickSuggestionsDelay", 0,
+        "editor.suggestSelection", "first",
+        "editor.snippetSuggestions", "top",
+        "editor.gotoLocation.multipleReferences", "goto",
+        "editor.gotoLocation.multipleDefinitions", "goto",
+        "editor.gotoLocation.multipleDeclarations", "goto",
+        "editor.gotoLocation.multipleImplementations", "goto",
+        "editor.gotoLocation.multipleTypeDefinitions", "goto",
+        "files.trimTrailingWhitespace", true,
+        "files.trimFinalNewlines", true
+      ],
+      "extensions": [
+        "golang.go",
+        "vscodevim.vim",
+        "github.copilot",
+        "ms-python.python",
+        "ms-vscode.makefile-tools",
+        "ms-azuretools.vscode-docker",
+        "ms-vscode-remote.remote-containers",
+        "bierner.markdown-preview-github-styles"
+      ]
+    }
+  },
+  "features": {
+    "ghcr.io/devcontainers/features/common-utils:2": {},
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
+      "version": "latest",
+      "installDockerBuildx": true,
+      "moby": false
+    }
+  },
+  "remoteUser": "root",
+  "runArgs": ["--network=host"]
+}
