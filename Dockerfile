@@ -14,7 +14,9 @@ setuptools \
 "
 
 ARG APT_PKGS="\
+gh \
 git \
+vim \
 curl \
 tmux \
 gnupg \
@@ -39,12 +41,14 @@ github.com/haya14busa/goplay/cmd/goplay@latest \
 
 # Append rootfs directory tree into container to copy
 # additional files into the container's directory tree
-ADD docker/rootfs /
+ADD rootfs /
 
 # Disable timezone prompts
 ENV TZ=UTC
 # Disable package manager prompts
 ENV DEBIAN_FRONTEND=noninteractive
+# Add go and nix to path
+ENV PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/usr/local/go/bin:/nix/var/nix/profiles/default/bin"
 
 # Install apt & pip packages
 RUN set -ex \
@@ -67,7 +71,6 @@ RUN set -ex \
     && true
 
 # Install golang from upstream
-ENV PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/usr/local/go/bin"
 RUN set -ex \
     && export arch=$(uname -m | awk '{ if ($1 == "x86_64") print "amd64"; else if ($1 == "aarch64" || $1 == "arm64") print "arm64"; else print "unknown" }') \
     && export goversion="$(curl -s https://go.dev/dl/?mode=json | awk -F'[":go]' '/  "version"/{print $8}' | head -n1)" \
@@ -100,6 +103,16 @@ RUN set -ex \
     && npm --version \
     && npm install --global yarn \
     && yarn --version \
+    && true
+
+# Install Nix
+ENV PATH="${PATH}"
+RUN set -ex \
+    && curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix \
+        | sh -s -- install linux \
+            --extra-conf "sandbox = false" \
+            --init none \
+            --no-confirm \
     && true
 
 # Install pulumi
@@ -167,7 +180,7 @@ RUN set -ex \
     && rm -rf /tmp/linux-amd64 \
     && true
 
-WORKDIR /provider
+WORKDIR /workspaces
 CMD ["make", "build"]
 
 ARG VERSION
@@ -179,8 +192,8 @@ LABEL \
     org.opencontainers.image.created=$BUILD_DATE \
     org.opencontainers.image.vendor="Pulumi" \
     org.opencontainers.image.licenses="APACHE2" \
-    org.opencontainers.image.title="Pulumi native provider build image." \
-    org.opencontainers.image.url="https://github.com/pulumi/pulumi-provider-boilerplate" \
-    org.opencontainers.image.documentation="https://github.com/pulumi/pulumi-provider-boilerplate" \
-    org.opencontainers.image.description="A containerized environment for building native pulumi providers." \
+    org.opencontainers.image.title="Pulumi Dev Container" \
+    org.opencontainers.image.url="https://github.com/pulumi/devcontainer" \
+    org.opencontainers.image.documentation="https://github.com/pulumi/devcontainer" \
+    org.opencontainers.image.description="A containerized environment for developing and running pulumi IaC and Provider code" \
     org.opencontainers.image.authors="https://github.com/pulumi"

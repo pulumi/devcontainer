@@ -1,14 +1,22 @@
-// Reference:
-// - https://containers.dev/features
-// - https://containers.dev/implementors/features
-// - https://code.visualstudio.com/docs/getstarted/settings
 {
   "name": "pulumi",
   "build": {
-    "dockerfile": "Dockerfile",
-    "context": "."
+    "dockerfile": "../Dockerfile",
+    "context": ".."
   },
   "customizations": {
+    "codespaces": {
+      "repositories": {
+        "pulumi/pulumi-hugo": {
+          "permissions": {
+            "issues": "write",
+            "contents": "write",
+            "pullRequests": "write",
+            "metadata": "read"
+          }
+        }
+      }
+    },
     "vscode": {
       "settings": [
         "go.testTags", "all",
