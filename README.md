@@ -47,3 +47,4 @@ pulumi login
 > Fig 2.b pulumi login
 ![Pulumi login](./.github/assets/pulumi-login.png)
 ![Pulumi login complete](./.github/assets/pulumi-login-complete.png)
+

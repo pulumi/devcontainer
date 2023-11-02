@@ -105,15 +105,16 @@ RUN set -ex \
     && yarn --version \
     && true
 
-# Install Nix
-ENV PATH="${PATH}"
-RUN set -ex \
-    && curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix \
-        | sh -s -- install linux \
-            --extra-conf "sandbox = false" \
-            --init none \
-            --no-confirm \
-    && true
+# TODO: fix qemu buildx github action multi-arch arm64 nix install failure
+## Install Nix
+#ENV PATH="${PATH}"
+#RUN set -ex \
+#    && curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix \
+#        | sh -s -- install linux \
+#            --extra-conf "sandbox = false" \
+#            --init none \
+#            --no-confirm \
+#    && true
 
 # Install pulumi
 RUN set -ex \
@@ -128,6 +129,21 @@ RUN set -ex \
     && rm -rf /tmp/pulumi \
     && which pulumi \
     && pulumi version \
+    && true
+
+# Install Pulumi ESC
+RUN set -ex \
+    && export arch=$(uname -m | awk '{ if ($1 == "x86_64") print "x64"; else if ($1 == "aarch64" || $1 == "arm64") print "arm64"; else print "unknown" }') \
+    && export urlPulumiRelease="https://api.github.com/repos/pulumi/esc/releases/latest" \
+    && export urlPulumiVersion=$(curl -s ${urlPulumiRelease} | awk -F '["v,]' '/tag_name/{print $5}') \
+    && export urlPulumiBase="https://github.com/pulumi/esc/releases/download" \
+    && export urlPulumiBin="esc-v${urlPulumiVersion}-linux-${arch}.tar.gz" \
+    && export urlPulumi="${urlPulumiBase}/v${urlPulumiVersion}/${urlPulumiBin}" \
+    && curl -L ${urlPulumi} | tar xzvf - --directory /tmp \
+    && mv /tmp/esc/esc /usr/local/bin/esc \
+    && rm -rf /tmp/esc \
+    && which esc \
+    && esc version \
     && true
 
 # Install pulumictl
