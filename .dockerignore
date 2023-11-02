@@ -5,8 +5,7 @@
 # Exceptions to the default ignore rules
 !.dockerignore
 !Dockerfile
-!src
-!docker
+!rootfs
 
 # Ignore Python cache files
 __pycache__/

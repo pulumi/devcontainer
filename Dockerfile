@@ -1,11 +1,11 @@
 # Build Container:
-# - docker build -t devcontainer -f Dockerfile .
+# - docker build -t ghcr.io/pulumi/devcontainer -f Dockerfile .
 #
 # Build Provider:
-# - docker run -it --rm -v $PWD:/workspace devcontainer
+# - docker run -it --rm -v $PWD:/workspace ghcr.io/pulumi/devcontainer
 #
 # Run Container:
-# - docker run -it --rm -v $PWD:/workspace --entrypoint bash devcontainer
+# - docker run -it --rm -v $PWD:/workspace --entrypoint bash ghcr.io/pulumi/devcontainer
 
 FROM docker.io/library/ubuntu:22.04
 
@@ -183,6 +183,12 @@ RUN set -ex \
 WORKDIR /workspaces
 CMD ["make", "build"]
 
+# GHCR Labels
+LABEL org.opencontainers.image.licenses="APACHE2"
+LABEL org.opencontainers.image.source="https://github.com/pulumi/devcontainer"
+LABEL org.opencontainers.image.description="A containerized environment for developing and running pulumi IaC and Provider code"
+
+# General Labels
 ARG VERSION
 ARG BUILD_DATE
 ARG PULUMICTL
@@ -191,9 +197,8 @@ LABEL \
     org.opencontainers.image.version=$VERSION \
     org.opencontainers.image.created=$BUILD_DATE \
     org.opencontainers.image.vendor="Pulumi" \
-    org.opencontainers.image.licenses="APACHE2" \
     org.opencontainers.image.title="Pulumi Dev Container" \
     org.opencontainers.image.url="https://github.com/pulumi/devcontainer" \
     org.opencontainers.image.documentation="https://github.com/pulumi/devcontainer" \
-    org.opencontainers.image.description="A containerized environment for developing and running pulumi IaC and Provider code" \
     org.opencontainers.image.authors="https://github.com/pulumi"
+
