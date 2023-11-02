@@ -1,0 +1,16 @@
+{
+     "go.testTags": "all",
+     "go.buildTags": "all",
+     "editor.minimap.enabled": false,
+     "explorer.openEditors.visible": 1,
+     "editor.quickSuggestionsDelay": 0,
+     "editor.suggestSelection": "first",
+     "editor.snippetSuggestions": "top",
+     "editor.gotoLocation.multipleReferences": "goto",
+     "editor.gotoLocation.multipleDefinitions": "goto",
+     "editor.gotoLocation.multipleDeclarations": "goto",
+     "editor.gotoLocation.multipleImplementations": "goto",
+     "editor.gotoLocation.multipleTypeDefinitions": "goto",
+     "files.trimTrailingWhitespace": true,
+     "files.trimFinalNewlines": true
+}
