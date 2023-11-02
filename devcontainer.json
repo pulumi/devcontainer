@@ -3,11 +3,13 @@
 // - https://containers.dev/implementors/features
 // - https://code.visualstudio.com/docs/getstarted/settings
 {
+  // NOTE: remove `image` and uncomment `build` to build the image locally
+  //"build": {
+  //  "dockerfile": "Dockerfile",
+  //  "context": "."
+  //},
   "name": "pulumi",
-  "build": {
-    "dockerfile": "Dockerfile",
-    "context": "."
-  },
+  "image": "ghcr.io/pulumi/devcontainer",
   "customizations": {
     "vscode": {
       "settings": [
@@ -46,6 +48,6 @@
       "moby": false
     }
   },
-  "remoteUser": "root",
+  "remoteUser": "vscode",
   "runArgs": ["--network=host"]
 }
