@@ -105,7 +105,7 @@ RUN set -ex \
     && yarn --version \
     && true
 
-# TODO: debug qemu buildx cross arch build failure
+# TODO: fix qemu buildx github action multi-arch arm64 nix install failure
 ## Install Nix
 #ENV PATH="${PATH}"
 #RUN set -ex \
