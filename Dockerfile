@@ -3,6 +3,9 @@
 #
 # Run Container:
 # - docker run -it --rm -v $PWD:/workspaces ghcr.io/pulumi/devcontainer
+#
+# Base Image Reference:
+# - https://mcr.microsoft.com/en-us/product/devcontainers/base/about
 
 FROM mcr.microsoft.com/devcontainers/base:ubuntu-22.04
 
