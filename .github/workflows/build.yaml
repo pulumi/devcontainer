@@ -47,5 +47,7 @@ jobs:
                 push: true
                 context: .
                 file: Dockerfile
-                platforms: linux/amd64,linux/arm64
+                platforms: linux/amd64
+                # TODO: Reactivate arm64 builds after debugging
+                #platforms: linux/amd64,linux/arm64
                 tags: 'ghcr.io/pulumi/devcontainer:latest'
