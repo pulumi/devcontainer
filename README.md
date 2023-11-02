@@ -2,7 +2,7 @@
 
 ### [![ghcr.io/pulumi/devcontainer](https://github.com/pulumi/devcontainer/actions/workflows/build.yaml/badge.svg?branch=main)](https://github.com/pulumi/devcontainer/actions/workflows/build.yaml)
 
-This repository is designed with deep [VS Code](https://code.visualstudio.com) integration to automate Pulumi IaC and Provider development dependencies and prerequisites as much as possible using [Dev Containers](https://containers.dev/)) to prepare your development environment, or even just run your development directly in the browser with [Github CodeSpaces](https://github.com/features/codespaces).
+This repository is designed with deep [VS Code](https://code.visualstudio.com) integration to automate Pulumi IaC and Provider development dependencies and prerequisites as much as possible using [Dev Containers](https://containers.dev/) to prepare your development environment, or even just run your development directly in the browser with [Github CodeSpaces](https://github.com/features/codespaces).
 
 ![CodeSpaces Screenshot](./.github/assets/codespaces.png)
 
@@ -47,4 +47,3 @@ pulumi login
 > Fig 2.b pulumi login
 ![Pulumi login](./.github/assets/pulumi-login.png)
 ![Pulumi login complete](./.github/assets/pulumi-login-complete.png)
-

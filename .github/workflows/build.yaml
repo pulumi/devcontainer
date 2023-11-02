@@ -40,6 +40,14 @@ jobs:
             uses: docker/setup-buildx-action@v3
             id: buildx
         -
+            name: Login to GitHub Container Registry
+            id: login
+            uses: docker/login-action@v3
+            with:
+                registry: ghcr.io
+                username: ${{ github.actor }}
+                password: ${{ secrets.GITHUB_TOKEN }}
+        -
             name: Build & Publish Dev Container
             id: docker
             uses: docker/build-push-action@v5
@@ -47,5 +55,7 @@ jobs:
                 push: true
                 context: .
                 file: Dockerfile
-                platforms: linux/amd64,linux/arm64
-                tags: 'ghcr.io/pulumi/devcontainer:latest'
+                platforms: linux/amd64
+                # TODO: Reactivate arm64 builds after debugging
+                #platforms: linux/amd64,linux/arm64
+                tags: 'ghcr.io/${{ github.actor }}/devcontainer:latest'
