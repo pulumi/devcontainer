@@ -48,4 +48,4 @@ jobs:
                 context: .
                 file: Dockerfile
                 platforms: linux/amd64,linux/arm64
-                tags: 'pulumi/devcontainer:latest'
+                tags: 'ghcr.io/pulumi/devcontainer:latest'
