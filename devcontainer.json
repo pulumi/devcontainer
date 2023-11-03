@@ -10,10 +10,6 @@
   //},
   "name": "pulumi",
   "image": "ghcr.io/pulumi/devcontainer",
-  "",
-  "",
-  "",
-  "",
   "settings": {
     "terminal.integrated.shell.linux": "/usr/bin/zsh"
   },
