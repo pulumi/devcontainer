@@ -52,21 +52,6 @@ ENV PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/game
 # Default to MS FROM image builtin user
 USER vscode
 
-# TODO: evaluate for a better fix
-# MS base image 'vscode' user is not alligned with github action runner container UID:GID mapping
-# - Adjust the UID of the 'vscode' user to 1001 and GID if necessary
-# - Ensure the vscode user owns their home directory
-# - Ensure the vscode user has the right permissions on the working directories
-RUN set -ex \
-    && sudo usermod -u 1001 vscode \
-    && sudo groupmod -g 1001 vscode \
-    && mkdir -p \
-         /home/vscode \
-         /__w \
-    && sudo chown -R vscode:vscode /home/vscode \
-    && sudo chown -R vscode:vscode /__w \
-    && true
-
 # Install apt & pip packages
 RUN set -ex \
     && sudo apt-get update \
