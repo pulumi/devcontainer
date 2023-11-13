@@ -146,6 +146,7 @@ RUN set -ex \
 ARG APT_PKGS="\
 python3 \
 python3-pip \
+python3-venv \
 dotnet-sdk-7.0 \
 dotnet-runtime-7.0 \
 "
