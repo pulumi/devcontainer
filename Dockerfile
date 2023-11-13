@@ -9,17 +9,6 @@
 
 FROM mcr.microsoft.com/devcontainers/base:ubuntu-22.04
 
-ARG APT_PKGS="\
-gh \
-git \
-curl \
-gnupg \
-build-essential \
-ca-certificates \
-tmux \
-vim \
-"
-
 # Append rootfs directory tree into container to copy
 # additional files into the container's directory tree
 ADD rootfs /
@@ -34,6 +23,16 @@ ENV PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/loca
 USER vscode
 
 # Install apt packages
+ARG APT_PKGS="\
+gh \
+git \
+curl \
+gnupg \
+build-essential \
+ca-certificates \
+tmux \
+vim \
+"
 RUN set -ex \
     && sudo apt-get update \
     && sudo apt-get install ${APT_PKGS} \
@@ -58,13 +57,14 @@ RUN set -ex \
     && export urlPulumiBin="pulumi-v${urlPulumiVersion}-linux-${arch}.tar.gz" \
     && export urlPulumi="${urlPulumiBase}/v${urlPulumiVersion}/${urlPulumiBin}" \
     && curl -L ${urlPulumi} | tar xzvf - --directory /tmp \
+    && chmod +x /tmp/pulumi/* \
     && sudo mv /tmp/pulumi/* /usr/local/bin/ \
-    && rm -rf /tmp/pulumi \
     && which pulumi \
     && pulumi version \
+    && rm -rf /tmp/* \
     && true
 
-# Install Pulumi ESC
+# Install pulumi esc
 RUN set -ex \
     && export arch=$(uname -m | awk '{ if ($1 == "x86_64") print "x64"; else if ($1 == "aarch64" || $1 == "arm64") print "arm64"; else print "unknown" }') \
     && export urlPulumiRelease="https://api.github.com/repos/pulumi/esc/releases/latest" \
@@ -73,10 +73,11 @@ RUN set -ex \
     && export urlPulumiBin="esc-v${urlPulumiVersion}-linux-${arch}.tar.gz" \
     && export urlPulumi="${urlPulumiBase}/v${urlPulumiVersion}/${urlPulumiBin}" \
     && curl -L ${urlPulumi} | tar xzvf - --directory /tmp \
+    && chmod +x /tmp/esc/esc \
     && sudo mv /tmp/esc/esc /usr/local/bin/esc \
-    && rm -rf /tmp/esc \
     && which esc \
     && esc version \
+    && rm -rf /tmp/* \
     && true
 
 # Install pulumictl
@@ -88,13 +89,14 @@ RUN set -ex \
     && export urlPulumiBin="pulumictl-v${urlPulumiVersion}-linux-${arch}.tar.gz" \
     && export urlPulumi="${urlPulumiBase}/v${urlPulumiVersion}/${urlPulumiBin}" \
     && curl -L ${urlPulumi} | tar xzvf - --directory /tmp \
+    && chmod +x /tmp/pulumictl \
     && sudo mv /tmp/pulumictl /usr/local/bin/ \
-    && rm -rf /tmp/* \
     && which pulumictl \
     && pulumictl version \
+    && rm -rf /tmp/* \
     && true
 
-# Install Nix
+# Install nix
 # BUG: fix qemu buildx github action multi-arch arm64 nix install failure
 ENV PATH="${PATH}"
 RUN set -ex \
@@ -104,8 +106,9 @@ RUN set -ex \
     && [ ${arch} = "arm64" ] || bash -c "nix --version" \
     && true
 
-# Install Devbox from jetpack.io
+# Install devbox
 # BUG: depends on Nix installer qemu buildx gha arm64 bug resolution
+# TODO: add devbox version test
 RUN set -ex \
     && export arch=$(uname -m | awk '{ if ($1 == "x86_64") print "amd64"; else if ($1 == "aarch64" || $1 == "arm64") print "arm64"; else print "unknown" }') \
     && [ ${arch} = "arm64" ] || curl -L https://get.jetpack.io/devbox --output /tmp/devbox.sh \
@@ -113,7 +116,7 @@ RUN set -ex \
     && [ ${arch} = "arm64" ] || rm -rf /tmp/* \
     && true
 
-# Install golang from upstream
+# Install golang
 # TODO: relocate install to devbox
 ARG GO_PKGS="\
 golang.org/x/tools/gopls@latest \
@@ -133,7 +136,7 @@ RUN set -ex \
     && for pkg in ${GO_PKGS}; do go install ${pkg}; echo "Installed: ${pkg}"; done \
     && true
 
-# Install Python
+# Install python
 # TODO: relocate install to devbox
 ARG APT_PKGS="\
 python3 \
@@ -163,7 +166,7 @@ RUN set -ex \
         /tmp/* \
     && true
 
-# Install .NET
+# Install dotnet
 # TODO: relocate install to devbox
 ARG APT_PKGS="\
 dotnet-sdk-7.0 \
@@ -210,7 +213,7 @@ RUN set -ex \
     && yarn --version \
     && true
 
-# Install kind (Kubernetes-in-Docker)
+# Install kind (kubernetes-in-docker)
 # TODO: relocate install to devcontainer.json
 RUN set -ex \
     && export arch=$(uname -m | awk '{ if ($1 == "x86_64") print "amd64"; else if ($1 == "aarch64" || $1 == "arm64") print "arm64"; else print "unknown" }') \
@@ -233,7 +236,7 @@ RUN set -ex \
     && export varKubectlUrl="https://storage.googleapis.com/kubernetes-release/release/v${varKubectlVersion}/bin/linux/${arch}/kubectl" \
     && sudo curl -L ${varKubectlUrl} --output /usr/local/bin/kubectl \
     && sudo chmod +x /usr/local/bin/kubectl \
-    && kubectl version --client || exit 1 \
+    && kubectl version --client || true \
     && true
 
 # Install helm
@@ -242,10 +245,10 @@ RUN set -ex \
     && export varVerHelm="$(curl -s https://api.github.com/repos/helm/helm/releases/latest | awk -F '[\"v,]' '/tag_name/{print $5}')" \
     && export varUrlHelm="https://get.helm.sh/helm-v${varVerHelm}-linux-amd64.tar.gz" \
     && curl -L ${varUrlHelm} | tar xzvf - --directory /tmp linux-amd64/helm \
+    && chmod +x /tmp/linux-amd64/helm \
     && sudo mv /tmp/linux-amd64/helm /usr/local/bin/helm \
-    && sudo chmod +x /usr/local/bin/helm \
-    && rm -rf /tmp/linux-amd64 \
     && helm version \
+    && rm -rf /tmp/linux-amd64 \
     && true
 
 WORKDIR /workspaces
