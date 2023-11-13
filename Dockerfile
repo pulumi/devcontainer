@@ -98,21 +98,26 @@ RUN set -ex \
 
 # Install nix
 # BUG: fix qemu buildx github action multi-arch arm64 nix install failure
-ENV PATH="${PATH}"
 RUN set -ex \
+    && export urlNix="https://install.determinate.systems/nix" \
     && export arch=$(uname -m | awk '{ if ($1 == "x86_64") print "amd64"; else if ($1 == "aarch64" || $1 == "arm64") print "arm64"; else print "unknown" }') \
-    && [ ${arch} = "arm64" ] || curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix \
-       | sh -s -- install linux --extra-conf "sandbox = false" --init none --no-confirm \
-    && [ ${arch} = "arm64" ] || bash -c "nix --version" \
+    && [ ${arch} = "arm64" ] || curl --proto '=https' --tlsv1.2 -sSf -L ${urlNix} --output /tmp/install.sh \
+    && [ ${arch} = "arm64" ] || chmod +x /tmp/install.sh \
+    && [ ${arch} = "arm64" ] || /tmp/install.sh install linux --extra-conf "sandbox = false" --init none --no-confirm \
+    && [ ${arch} = "arm64" ] || sh -c "nix --version" \
+    && [ ${arch} = "arm64" ] || rm -rf /tmp/* \
     && true
 
 # Install devbox
 # BUG: depends on Nix installer qemu buildx gha arm64 bug resolution
 # TODO: add devbox version test
 RUN set -ex \
+    && export urlDevbox="https://get.jetpack.io/devbox" \
     && export arch=$(uname -m | awk '{ if ($1 == "x86_64") print "amd64"; else if ($1 == "aarch64" || $1 == "arm64") print "arm64"; else print "unknown" }') \
-    && [ ${arch} = "arm64" ] || curl -L https://get.jetpack.io/devbox --output /tmp/devbox.sh \
-    && [ ${arch} = "arm64" ] || bash /tmp/devbox.sh -f \
+    && [ ${arch} = "arm64" ] || curl --proto '=https' --tlsv1.2 -sSf -L ${urlDevbox} --output /tmp/install.sh \
+    && [ ${arch} = "arm64" ] || chmod +x /tmp/install.sh \
+    && [ ${arch} = "arm64" ] || /tmp/install.sh -f \
+    && [ ${arch} = "arm64" ] || devbox version \
     && [ ${arch} = "arm64" ] || rm -rf /tmp/* \
     && true
 
