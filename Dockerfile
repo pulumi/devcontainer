@@ -107,17 +107,6 @@ RUN set -ex \
     && yarn --version \
     && true
 
-# TODO: fix qemu buildx github action multi-arch arm64 nix install failure
-## Install Nix
-#ENV PATH="${PATH}"
-#RUN set -ex \
-#    && curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix \
-#        | sh -s -- install linux \
-#            --extra-conf "sandbox = false" \
-#            --init none \
-#            --no-confirm \
-#    && true
-
 # Install pulumi
 RUN set -ex \
     && export arch=$(uname -m | awk '{ if ($1 == "x86_64") print "x64"; else if ($1 == "aarch64" || $1 == "arm64") print "arm64"; else print "unknown" }') \
@@ -197,6 +186,22 @@ RUN set -ex \
     && rm -rf /tmp/linux-amd64 \
     && helm version \
     && true
+
+# TODO: fix qemu buildx github action multi-arch arm64 nix install failure
+## Install Nix
+ENV PATH="${PATH}"
+RUN set -ex \
+     && curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix \
+        | sh -s -- install linux --extra-conf "sandbox = false" --init none --no-confirm \
+     && bash -c "nix --version" \
+     && true
+
+### Install Devbox from jetpack.io
+RUN set -ex \
+     && curl -L https://get.jetpack.io/devbox --output /tmp/devbox.sh \
+     &&  bash /tmp/devbox.sh -f \
+     && rm -rf /tmp/* \
+     && true
 
 WORKDIR /workspaces
 CMD ["/usr/bin/zsh"]
