@@ -99,18 +99,18 @@ RUN set -ex \
 ENV PATH="${PATH}"
 RUN set -ex \
     && export arch=$(uname -m | awk '{ if ($1 == "x86_64") print "amd64"; else if ($1 == "aarch64" || $1 == "arm64") print "arm64"; else print "unknown" }') \
-    && [ ${arch} != "arm64" ] || curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix \
+    && [ ${arch} == "arm64" ] || curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix \
        | sh -s -- install linux --extra-conf "sandbox = false" --init none --no-confirm \
-    && [ ${arch} != "arm64" ] || bash -c "nix --version" \
+    && [ ${arch} == "arm64" ] || bash -c "nix --version" \
     && true
 
 ### Install Devbox from jetpack.io
 # BUG: depends on Nix installer qemu buildx gha arm64 bug resolution
 RUN set -ex \
     && export arch=$(uname -m | awk '{ if ($1 == "x86_64") print "amd64"; else if ($1 == "aarch64" || $1 == "arm64") print "arm64"; else print "unknown" }') \
-    && [ ${arch} != "arm64" ] || curl -L https://get.jetpack.io/devbox --output /tmp/devbox.sh \
-    && [ ${arch} != "arm64" ] || bash /tmp/devbox.sh -f \
-    && [ ${arch} != "arm64" ] || rm -rf /tmp/* \
+    && [ ${arch} == "arm64" ] || curl -L https://get.jetpack.io/devbox --output /tmp/devbox.sh \
+    && [ ${arch} == "arm64" ] || bash /tmp/devbox.sh -f \
+    && [ ${arch} == "arm64" ] || rm -rf /tmp/* \
     && true
 
 # Install golang from upstream
