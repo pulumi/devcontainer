@@ -22,13 +22,13 @@ To add this repository as a submodule to your project, run the following command
 
 ```bash
 git submodule add https://github.com/pulumi/devcontainer .devcontainer
-git submodule update --init --recursive
+git submodule update --init --recursive .devcontainer
 ```
 
 To update the devcontainer submodule in consuming repos:
 
 ```bash
-git submodule update --remote --merge
+git submodule update --remote --merge .devcontainer
 ```
 
 After the submodule is added, you can open your project in VS Code and it will automatically detect the Dev Container configuration and prompt you to open the project in a container, or you can open the project in Github CodeSpaces.
