@@ -94,7 +94,7 @@ RUN set -ex \
     && pulumictl version \
     && true
 
-## Install Nix
+# Install Nix
 # BUG: fix qemu buildx github action multi-arch arm64 nix install failure
 ENV PATH="${PATH}"
 RUN set -ex \
@@ -104,7 +104,7 @@ RUN set -ex \
     && [ ${arch} = "arm64" ] || bash -c "nix --version" \
     && true
 
-### Install Devbox from jetpack.io
+# Install Devbox from jetpack.io
 # BUG: depends on Nix installer qemu buildx gha arm64 bug resolution
 RUN set -ex \
     && export arch=$(uname -m | awk '{ if ($1 == "x86_64") print "amd64"; else if ($1 == "aarch64" || $1 == "arm64") print "arm64"; else print "unknown" }') \
@@ -259,8 +259,6 @@ LABEL org.opencontainers.image.description="A containerized environment for deve
 # General Labels
 ARG VERSION
 ARG BUILD_DATE
-ARG PULUMICTL
-ARG PULUMI
 LABEL \
     org.opencontainers.image.version=$VERSION \
     org.opencontainers.image.created=$BUILD_DATE \
