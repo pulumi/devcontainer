@@ -105,11 +105,7 @@ RUN set -ex \
     && export arch=$(uname -m | awk '{ if ($1 == "x86_64") print "amd64"; else if ($1 == "aarch64" || $1 == "arm64") print "arm64"; else print "unknown" }') \
     && curl --proto '=https' --tlsv1.2 -sSf -L ${urlNix} --output /tmp/install.sh \
     && chmod +x /tmp/install.sh \
-    && true
-RUN set -ex \
     && /tmp/install.sh install linux --init none --extra-conf "filter-syscalls = false" --no-confirm \
-    && true
-RUN set -ex \
     && sh -c "nix --version" \
     && rm -rf /tmp/* \
     && true
