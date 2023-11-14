@@ -38,7 +38,6 @@
         "ms-python.python",
         "jetpack-io.devbox",
         "redhat.vscode-yaml",
-        "eg2.vscode-npm-script",
         "esbenp.prettier-vscode",
         "ms-vscode.makefile-tools",
         "ms-azuretools.vscode-docker",
