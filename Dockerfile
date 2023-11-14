@@ -19,6 +19,8 @@ ENV TZ=UTC
 ENV DEBIAN_FRONTEND=noninteractive
 # Add go and nix to path
 ENV PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/local/go/bin:/nix/var/nix/profiles/default/bin"
+# Set necessary nix environment variable
+ENV NIX_INSTALLER_EXTRA_CONF='filter-syscalls = false'
 # Default to MS FROM image builtin user
 USER vscode
 
@@ -101,11 +103,11 @@ RUN set -ex \
 RUN set -ex \
     && export urlNix="https://install.determinate.systems/nix" \
     && export arch=$(uname -m | awk '{ if ($1 == "x86_64") print "amd64"; else if ($1 == "aarch64" || $1 == "arm64") print "arm64"; else print "unknown" }') \
-    && [ ${arch} = "arm64" ] || curl --proto '=https' --tlsv1.2 -sSf -L ${urlNix} --output /tmp/install.sh \
-    && [ ${arch} = "arm64" ] || chmod +x /tmp/install.sh \
-    && [ ${arch} = "arm64" ] || /tmp/install.sh install linux --extra-conf "sandbox = false" --init none --no-confirm \
-    && [ ${arch} = "arm64" ] || sh -c "nix --version" \
-    && [ ${arch} = "arm64" ] || rm -rf /tmp/* \
+    && curl --proto '=https' --tlsv1.2 -sSf -L ${urlNix} --output /tmp/install.sh \
+    && chmod +x /tmp/install.sh \
+    && /tmp/install.sh install linux --extra-conf "sandbox = false" --init none --no-confirm \
+    && sh -c "nix --version" \
+    && rm -rf /tmp/* \
     && true
 
 # Install devbox
@@ -114,11 +116,11 @@ RUN set -ex \
 RUN set -ex \
     && export urlDevbox="https://get.jetpack.io/devbox" \
     && export arch=$(uname -m | awk '{ if ($1 == "x86_64") print "amd64"; else if ($1 == "aarch64" || $1 == "arm64") print "arm64"; else print "unknown" }') \
-    && [ ${arch} = "arm64" ] || curl --proto '=https' --tlsv1.2 -sSf -L ${urlDevbox} --output /tmp/install.sh \
-    && [ ${arch} = "arm64" ] || chmod +x /tmp/install.sh \
-    && [ ${arch} = "arm64" ] || /tmp/install.sh -f \
-    && [ ${arch} = "arm64" ] || devbox version \
-    && [ ${arch} = "arm64" ] || rm -rf /tmp/* \
+    && curl --proto '=https' --tlsv1.2 -sSf -L ${urlDevbox} --output /tmp/install.sh \
+    && chmod +x /tmp/install.sh \
+    && /tmp/install.sh -f \
+    && devbox version \
+    && rm -rf /tmp/* \
     && true
 
 # Install golang
