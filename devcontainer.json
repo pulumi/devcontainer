@@ -3,11 +3,6 @@
 // - https://containers.dev/implementors/features
 // - https://code.visualstudio.com/docs/getstarted/settings
 {
-  // NOTE: remove `image` and uncomment `build` to build the image locally
-  //"build": {
-  //  "dockerfile": "Dockerfile",
-  //  "context": "."
-  //},
   "name": "pulumi",
   "image": "ghcr.io/pulumi/devcontainer",
   "settings": {
