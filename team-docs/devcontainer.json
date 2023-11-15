@@ -56,5 +56,6 @@
   },
   "postCreateCommand": "git submodule update --init --recursive",
   "remoteUser": "vscode",
+  "forwardPorts": [1313],
   "runArgs": ["--network=host"]
 }

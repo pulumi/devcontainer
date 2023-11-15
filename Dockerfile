@@ -262,6 +262,9 @@ RUN set -ex \
 WORKDIR /workspaces
 CMD ["/usr/bin/zsh"]
 
+# Hugo Development Web Server Port for pulumi/pulumi-hugo
+EXPOSE 1313
+
 # GHCR Labels
 LABEL org.opencontainers.image.licenses="APACHE2"
 LABEL org.opencontainers.image.source="https://github.com/pulumi/devcontainer"
