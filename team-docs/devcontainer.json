@@ -1,22 +1,14 @@
+// Reference:
+// - https://containers.dev/features
+// - https://containers.dev/implementors/features
+// - https://code.visualstudio.com/docs/getstarted/settings
 {
   "name": "pulumi",
-  "build": {
-    "dockerfile": "../Dockerfile",
-    "context": ".."
+  "image": "ghcr.io/pulumi/devcontainer",
+  "settings": {
+    "terminal.integrated.shell.linux": "/usr/bin/zsh"
   },
   "customizations": {
-    "codespaces": {
-      "repositories": {
-        "pulumi/pulumi-hugo": {
-          "permissions": {
-            "issues": "write",
-            "contents": "write",
-            "pullRequests": "write",
-            "metadata": "read"
-          }
-        }
-      }
-    },
     "vscode": {
       "settings": [
         "go.testTags", "all",
@@ -39,14 +31,22 @@
         "vscodevim.vim",
         "github.copilot",
         "ms-python.python",
+        "jetpack-io.devbox",
+        "redhat.vscode-yaml",
+        "esbenp.prettier-vscode",
         "ms-vscode.makefile-tools",
         "ms-azuretools.vscode-docker",
+        "github.vscode-pull-request-github",
         "ms-vscode-remote.remote-containers",
+        "visualstudioexptteam.vscodeintellicode",
         "bierner.markdown-preview-github-styles"
       ]
     }
   },
   "features": {
+    "ghcr.io/devcontainers/features/hugo:1": {
+      "version": "0.96.0"
+    },
     "ghcr.io/devcontainers/features/common-utils:2": {},
     "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
       "version": "latest",
@@ -54,6 +54,7 @@
       "moby": false
     }
   },
-  "remoteUser": "root",
+  "postCreateCommand": "git submodule update --init --recursive",
+  "remoteUser": "vscode",
   "runArgs": ["--network=host"]
 }
