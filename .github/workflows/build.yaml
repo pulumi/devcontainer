@@ -48,18 +48,18 @@ jobs:
                 username: ${{ github.repository_owner }}
                 password: ${{ secrets.GITHUB_TOKEN }}
         -
-            name: Build Dev Container Image
+            name: Build & Publish Dev Container
+            id: docker_build
             uses: docker/build-push-action@v5
             with:
                 push: false
-                load: true
                 context: .
                 file: Dockerfile
                 platforms: linux/amd64,linux/arm64
                 tags: 'ghcr.io/${{ github.repository_owner }}/devcontainer:latest'
-
         -
             name: Push Dev Container Image
+            id: docker_push
             if: github.event_name == 'push' && github.ref == 'refs/heads/main'
             uses: docker/build-push-action@v5
             with:
