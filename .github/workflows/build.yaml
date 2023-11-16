@@ -16,7 +16,7 @@ on:
         - '.vscode/**'
         - '**.md'
     schedule:
-        - cron: '0 0 * * *'
+        - cron: '0 0 * * 0'
 
 jobs:
     build:
@@ -48,8 +48,19 @@ jobs:
                 username: ${{ github.repository_owner }}
                 password: ${{ secrets.GITHUB_TOKEN }}
         -
-            name: Build & Publish Dev Container
-            id: docker
+            name: Build Dev Container Image
+            uses: docker/build-push-action@v5
+            with:
+                push: false
+                load: true
+                context: .
+                file: Dockerfile
+                platforms: linux/amd64,linux/arm64
+                tags: 'ghcr.io/${{ github.repository_owner }}/devcontainer:latest'
+
+        -
+            name: Push Dev Container Image
+            if: github.event_name == 'push' && github.ref == 'refs/heads/main'
             uses: docker/build-push-action@v5
             with:
                 push: true
