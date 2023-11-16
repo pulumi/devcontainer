@@ -221,49 +221,62 @@ RUN set -ex \
     && yarn --version \
     && true
 
-# Install kind (kubernetes-in-docker)
-# TODO: relocate install to devcontainer.json
+# Install hugo
+EXPOSE 1313
 RUN set -ex \
     && export arch=$(uname -m | awk '{ if ($1 == "x86_64") print "amd64"; else if ($1 == "aarch64" || $1 == "arm64") print "arm64"; else print "unknown" }') \
-    && export urlKindRelease="https://api.github.com/repos/kubernetes-sigs/kind/releases/latest" \
-    && export urlKindVersion=$(curl -s ${urlKindRelease} | awk -F '["v,]' '/tag_name/{print $5}') \
-    && export urlKindBase="https://github.com/kubernetes-sigs/kind/releases/download" \
-    && export urlKindBin="kind-linux-${arch}" \
-    && export urlKind="${urlKindBase}/v${urlKindVersion}/${urlKindBin}" \
-    && sudo curl -L ${urlKind} --output /usr/local/bin/kind \
-    && sudo chmod +x /usr/local/bin/kind \
-    && which kind \
-    && kind version \
+    && export urlHugoRelease="https://api.github.com/repos/gohugoio/hugo/releases/latest" \
+    && export urlHugoVersion=$(curl -s ${urlHugoRelease} | awk -F '["v,]' '/tag_name/{print $5}') \
+    && export urlHugoBase="https://github.com/gohugoio/hugo/releases/download" \
+    && export urlHugoBin="hugo_${urlHugoVersion}_linux-${arch}.deb" \
+    && export urlHugo="${urlHugoBase}/v${urlHugoVersion}/${urlHugoBin}" \
+    && curl --output /tmp/${urlHugoBin} -L ${urlHugo} \
+    && sudo dpkg -i /tmp/${urlHugoBin} \
+    && which hugo \
+    && hugo version \
+    && rm -rf /tmp/* \
     && true
 
-# Install kubectl
-# TODO: relocate install to devcontainer.json
-RUN set -ex \
-    && export arch=$(uname -m | awk '{ if ($1 == "x86_64") print "amd64"; else if ($1 == "aarch64" || $1 == "arm64") print "arm64"; else print "unknown" }') \
-    && export varKubectlVersion="$(curl --silent -L https://storage.googleapis.com/kubernetes-release/release/stable.txt | sed 's/v//g')" \
-    && export varKubectlUrl="https://storage.googleapis.com/kubernetes-release/release/v${varKubectlVersion}/bin/linux/${arch}/kubectl" \
-    && sudo curl -L ${varKubectlUrl} --output /usr/local/bin/kubectl \
-    && sudo chmod +x /usr/local/bin/kubectl \
-    && kubectl version --client || true \
-    && true
-
-# Install helm
-# TODO: relocate install to devcontainer.json
-RUN set -ex \
-    && export varVerHelm="$(curl -s https://api.github.com/repos/helm/helm/releases/latest | awk -F '[\"v,]' '/tag_name/{print $5}')" \
-    && export varUrlHelm="https://get.helm.sh/helm-v${varVerHelm}-linux-amd64.tar.gz" \
-    && curl -L ${varUrlHelm} | tar xzvf - --directory /tmp linux-amd64/helm \
-    && chmod +x /tmp/linux-amd64/helm \
-    && sudo mv /tmp/linux-amd64/helm /usr/local/bin/helm \
-    && helm version \
-    && rm -rf /tmp/linux-amd64 \
-    && true
+## Install kind (kubernetes-in-docker)
+## TODO: relocate install to devcontainer.json
+#RUN set -ex \
+#    && export arch=$(uname -m | awk '{ if ($1 == "x86_64") print "amd64"; else if ($1 == "aarch64" || $1 == "arm64") print "arm64"; else print "unknown" }') \
+#    && export urlKindRelease="https://api.github.com/repos/kubernetes-sigs/kind/releases/latest" \
+#    && export urlKindVersion=$(curl -s ${urlKindRelease} | awk -F '["v,]' '/tag_name/{print $5}') \
+#    && export urlKindBase="https://github.com/kubernetes-sigs/kind/releases/download" \
+#    && export urlKindBin="kind-linux-${arch}" \
+#    && export urlKind="${urlKindBase}/v${urlKindVersion}/${urlKindBin}" \
+#    && sudo curl -L ${urlKind} --output /usr/local/bin/kind \
+#    && sudo chmod +x /usr/local/bin/kind \
+#    && which kind \
+#    && kind version \
+#    && true
+#
+## Install kubectl
+## TODO: relocate install to devcontainer.json
+#RUN set -ex \
+#    && export arch=$(uname -m | awk '{ if ($1 == "x86_64") print "amd64"; else if ($1 == "aarch64" || $1 == "arm64") print "arm64"; else print "unknown" }') \
+#    && export varKubectlVersion="$(curl --silent -L https://storage.googleapis.com/kubernetes-release/release/stable.txt | sed 's/v//g')" \
+#    && export varKubectlUrl="https://storage.googleapis.com/kubernetes-release/release/v${varKubectlVersion}/bin/linux/${arch}/kubectl" \
+#    && sudo curl -L ${varKubectlUrl} --output /usr/local/bin/kubectl \
+#    && sudo chmod +x /usr/local/bin/kubectl \
+#    && kubectl version --client || true \
+#    && true
+#
+## Install helm
+## TODO: relocate install to devcontainer.json
+#RUN set -ex \
+#    && export varVerHelm="$(curl -s https://api.github.com/repos/helm/helm/releases/latest | awk -F '[\"v,]' '/tag_name/{print $5}')" \
+#    && export varUrlHelm="https://get.helm.sh/helm-v${varVerHelm}-linux-amd64.tar.gz" \
+#    && curl -L ${varUrlHelm} | tar xzvf - --directory /tmp linux-amd64/helm \
+#    && chmod +x /tmp/linux-amd64/helm \
+#    && sudo mv /tmp/linux-amd64/helm /usr/local/bin/helm \
+#    && helm version \
+#    && rm -rf /tmp/linux-amd64 \
+#    && true
 
 WORKDIR /workspaces
 CMD ["/usr/bin/zsh"]
-
-# Hugo Development Web Server Port for pulumi/pulumi-hugo
-EXPOSE 1313
 
 # GHCR Labels
 LABEL org.opencontainers.image.licenses="APACHE2"
