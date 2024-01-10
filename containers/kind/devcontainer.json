@@ -3,7 +3,7 @@
 // - https://containers.dev/implementors/features
 // - https://code.visualstudio.com/docs/getstarted/settings
 {
-  "name": "pulumi-devcontainer",
+  "name": "pulumi-devcontainer-kind",
   "image": "ghcr.io/pulumi/devcontainer:latest",
   "customizations": {
     "vscode": {
