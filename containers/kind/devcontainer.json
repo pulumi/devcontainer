@@ -76,7 +76,7 @@
         "dockerDashComposeVersion": "v2",
         "version": "latest",
         "moby": false
-    }
+    },
     "ghcr.io/devcontainers-contrib/features/kind:1": {}
   },
   "postCreateCommand": "git submodule update --init --recursive; direnv allow",
