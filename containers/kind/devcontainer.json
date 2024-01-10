@@ -3,30 +3,30 @@
 // - https://containers.dev/implementors/features
 // - https://code.visualstudio.com/docs/getstarted/settings
 {
-  "name": "pulumi-devcontainer",
+  "name": "pulumi-devcontainer-kind",
   "image": "ghcr.io/pulumi/devcontainer:latest",
   "customizations": {
     "vscode": {
       "settings": {
         // https://github.com/VSCodeVim/Vim
-        //"vim.easymotion": true,
-        //"vim.incsearch": true,
-        //"vim.useSystemClipboard": true,
-        //"vim.useCtrlKeys": true,
-        //"vim.hlsearch": true,
-        //"vim.insertModeKeyBindings": [
-        //  {
-        //    "before": ["j", "j"],
-        //    "after": ["<Esc>"]
-        //  }
-        //],
-        //"vim.handleKeys": {
-        //  "<C-a>": false,
-        //  "<C-f>": false
-        //},
-        //"extensions.experimental.affinity": {
-        //  "vscodevim.vim": 1
-        //},
+        "vim.easymotion": true,
+        "vim.incsearch": true,
+        "vim.useSystemClipboard": true,
+        "vim.useCtrlKeys": true,
+        "vim.hlsearch": true,
+        "vim.insertModeKeyBindings": [
+          {
+            "before": ["j", "j"],
+            "after": ["<Esc>"]
+          }
+        ],
+        "vim.handleKeys": {
+          "<C-a>": false,
+          "<C-f>": false
+        },
+        "extensions.experimental.affinity": {
+          "vscodevim.vim": 1
+        },
         "go.testTags": "all",
         "go.buildTags": "all",
         "editor.minimap.enabled": false,
@@ -48,8 +48,8 @@
       },
       "extensions": [
         "golang.go",
+        "vscodevim.vim",
         "github.copilot",
-        //"vscodevim.vim",
         "ms-python.python",
         "redhat.vscode-yaml",
         "esbenp.prettier-vscode",
@@ -67,17 +67,18 @@
         "username": "vscode",
         "userGid": "automatic",
         "userUid": "automatic",
-        "upgradePackages": false,
+        "upgradePackages": true,
         "nonFreePackages": true
     },
     "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
+        "moby": false,
         "installDockerBuildx": true,
-        "dockerDashComposeVersion": "v2",
         "version": "latest",
-        "moby": false
-    }
+        "dockerDashComposeVersion": "v2"
+    },
+    "ghcr.io/devcontainers-contrib/features/kind:1": {}
   },
-  "postCreateCommand": "git submodule update --init --recursive; direnv allow",
+  "postCreateCommand": "git submodule update --init --recursive",
   "remoteUser": "vscode",
   "forwardPorts": [1313, 2222, 6000, 7681, 8080],
   "runArgs": ["--network=host"]
