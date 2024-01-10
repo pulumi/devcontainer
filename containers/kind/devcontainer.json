@@ -3,12 +3,13 @@
 // - https://containers.dev/implementors/features
 // - https://code.visualstudio.com/docs/getstarted/settings
 {
-  "name": "pulumi-devcontainer-kind",
+  "name": "pulumi-devcontainer",
   "image": "ghcr.io/pulumi/devcontainer:latest",
   "customizations": {
     "vscode": {
       "settings": {
         // https://github.com/VSCodeVim/Vim
+        "vim.disableExtension": true,
         "vim.easymotion": true,
         "vim.incsearch": true,
         "vim.useSystemClipboard": true,
@@ -48,8 +49,8 @@
       },
       "extensions": [
         "golang.go",
-        "vscodevim.vim",
         "github.copilot",
+        "vscodevim.vim",
         "ms-python.python",
         "redhat.vscode-yaml",
         "esbenp.prettier-vscode",
@@ -67,18 +68,18 @@
         "username": "vscode",
         "userGid": "automatic",
         "userUid": "automatic",
-        "upgradePackages": true,
+        "upgradePackages": false,
         "nonFreePackages": true
     },
     "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
-        "moby": false,
         "installDockerBuildx": true,
+        "dockerDashComposeVersion": "v2",
         "version": "latest",
-        "dockerDashComposeVersion": "v2"
-    },
+        "moby": false
+    }
     "ghcr.io/devcontainers-contrib/features/kind:1": {}
   },
-  "postCreateCommand": "git submodule update --init --recursive",
+  "postCreateCommand": "git submodule update --init --recursive; direnv allow",
   "remoteUser": "vscode",
   "forwardPorts": [1313, 2222, 6000, 7681, 8080],
   "runArgs": ["--network=host"]
