@@ -9,24 +9,25 @@
     "vscode": {
       "settings": {
         // https://github.com/VSCodeVim/Vim
-        //"vim.easymotion": true,
-        //"vim.incsearch": true,
-        //"vim.useSystemClipboard": true,
-        //"vim.useCtrlKeys": true,
-        //"vim.hlsearch": true,
-        //"vim.insertModeKeyBindings": [
-        //  {
-        //    "before": ["j", "j"],
-        //    "after": ["<Esc>"]
-        //  }
-        //],
-        //"vim.handleKeys": {
-        //  "<C-a>": false,
-        //  "<C-f>": false
-        //},
-        //"extensions.experimental.affinity": {
-        //  "vscodevim.vim": 1
-        //},
+        "vim.disableExtension": true,
+        "vim.easymotion": true,
+        "vim.incsearch": true,
+        "vim.useSystemClipboard": true,
+        "vim.useCtrlKeys": true,
+        "vim.hlsearch": true,
+        "vim.insertModeKeyBindings": [
+          {
+            "before": ["j", "j"],
+            "after": ["<Esc>"]
+          }
+        ],
+        "vim.handleKeys": {
+          "<C-a>": false,
+          "<C-f>": false
+        },
+        "extensions.experimental.affinity": {
+          "vscodevim.vim": 1
+        },
         "go.testTags": "all",
         "go.buildTags": "all",
         "editor.minimap.enabled": false,
@@ -49,7 +50,7 @@
       "extensions": [
         "golang.go",
         "github.copilot",
-        //"vscodevim.vim",
+        "vscodevim.vim",
         "ms-python.python",
         "redhat.vscode-yaml",
         "esbenp.prettier-vscode",
