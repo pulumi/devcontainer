@@ -130,8 +130,6 @@ RUN set -ex \
     && chmod +x /tmp/install.sh \
     && sudo bash -c "/tmp/install.sh" \
     && direnv --version \
-    && source ${HOME}/.bashrc \
-    && direnv allow \
     && sudo rm -rf /tmp/* \
     && true
 
