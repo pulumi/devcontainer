@@ -31,6 +31,7 @@
         "go.testTags": "all",
         "go.buildTags": "all",
         "editor.minimap.enabled": false,
+        "editor.lineNumbers": "relative",
         "editor.quickSuggestionsDelay": 0,
         "editor.suggestSelection": "first",
         "editor.snippetSuggestions": "top",
