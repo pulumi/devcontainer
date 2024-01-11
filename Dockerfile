@@ -123,6 +123,18 @@ RUN set -ex \
     && rm -rf /tmp/* \
     && true
 
+# Install direnv
+RUN set -ex \
+    && echo 'eval "\$(direnv hook $SHELL)"' | sudo tee -a /etc/skel/.bashrc | tee -a ${HOME}/.bashrc \
+    && curl --output /tmp/install.sh --proto '=https' --tlsv1.2 -Sf -L "https://direnv.net/install.sh" \
+    && chmod +x /tmp/install.sh \
+    && sudo bash -c "/tmp/install.sh" \
+    && direnv --version \
+    && source ${HOME}/.bashrc \
+    && direnv allow \
+    && sudo rm -rf /tmp/* \
+    && true
+
 # Install golang
 # TODO: relocate install to devbox
 ARG GO_PKGS="\
