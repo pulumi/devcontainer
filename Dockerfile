@@ -80,6 +80,16 @@ RUN set -ex \
         /tmp/* \
     && true
 
+# Install Kind Kubernetes-in-Docker
+RUN set -ex \
+    && export arch=$(uname -m | awk '{ if ($1 == "x86_64") print "amd64"; else if ($1 == "aarch64" || $1 == "arm64") print "arm64"; else print "unknown" }') \
+    && export varVerKind=$(curl -s https://api.github.com/repos/kubernetes-sigs/kind/releases/latest | awk -F '["v,]' '/tag_name/{print $5}') \
+    && export varUrlKind="https://github.com/kubernetes-sigs/kind/releases/download/v${varVerKind}/kind-linux-${arch}" \
+    && sudo curl --output /usr/bin/kind -L ${varUrlKind} \
+    && sudo chmod +x /usr/bin/kind \
+    && /usr/bin/kind version \
+    && true
+
 # Install pulumi
 RUN set -ex \
     && export arch=$(uname -m | awk '{ if ($1 == "x86_64") print "x64"; else if ($1 == "aarch64" || $1 == "arm64") print "arm64"; else print "unknown" }') \
