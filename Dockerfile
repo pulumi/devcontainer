@@ -113,6 +113,16 @@ RUN set -ex \
     && /usr/bin/kind version \
     && true
 
+# Install Kubectl
+RUN set -ex \
+    && export arch=$(uname -m | awk '{ if ($1 == "x86_64") print "amd64"; else if ($1 == "aarch64" || $1 == "arm64") print "arm64"; else print "unknown" }') \
+    && export varVerKubectl="$(curl --silent -L https://storage.googleapis.com/kubernetes-release/release/stable.txt | sed 's/v//g')" \
+    && export varUrlKubectl="https://storage.googleapis.com/kubernetes-release/release/v${varVerKubectl}/bin/linux/${arch}/kubectl" \
+    && sudo curl -L ${varUrlKubectl} --output /bin/kubectl \
+    && sudo chmod +x /bin/kubectl \
+    && kubectl version --client \
+    && true
+
 # Install pulumi
 RUN set -ex \
     && export arch=$(uname -m | awk '{ if ($1 == "x86_64") print "x64"; else if ($1 == "aarch64" || $1 == "arm64") print "arm64"; else print "unknown" }') \
