@@ -125,7 +125,7 @@ RUN set -ex \
 
 # Install direnv
 RUN set -ex \
-    && echo 'eval "\$(direnv hook $SHELL)"' | sudo tee -a /etc/skel/.bashrc | tee -a ${HOME}/.bashrc \
+    && echo 'eval "$(direnv hook $SHELL)"' | sudo tee -a /etc/skel/.bashrc | tee -a ${HOME}/.bashrc \
     && curl --output /tmp/install.sh --proto '=https' --tlsv1.2 -Sf -L "https://direnv.net/install.sh" \
     && chmod +x /tmp/install.sh \
     && sudo bash -c "/tmp/install.sh" \
