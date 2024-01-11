@@ -28,18 +28,29 @@ USER vscode
 ARG APT_PKGS="\
 gh \
 git \
+vim \
 curl \
+tmux \
 gnupg \
+socat \
+libwrap0 \
+gnupg-agent \
+#docker-ce-cli \
+manpages-posix \
 build-essential \
 ca-certificates \
-tmux \
-vim \
+manpages-posix-dev \
+apt-transport-https \
+#docker-buildx-plugin \
+software-properties-common \
 "
 RUN set -ex \
     && sudo apt-get update \
     && sudo apt-get install ${APT_PKGS} \
     && sudo apt-get clean \
     && sudo apt-get autoremove -y \
+    && curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add - \
+    && sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable" \
     && sudo apt-get purge -y --auto-remove \
     && sudo rm -rf \
         /var/lib/{apt,dpkg,cache,log} \
@@ -125,7 +136,7 @@ RUN set -ex \
 
 # Install direnv
 RUN set -ex \
-    && echo 'eval "\$(direnv hook $SHELL)"' | sudo tee -a /etc/skel/.bashrc | tee -a ${HOME}/.bashrc \
+    && echo 'eval "$(direnv hook $SHELL)"' | sudo tee -a /etc/skel/.bashrc | tee -a ${HOME}/.bashrc \
     && curl --output /tmp/install.sh --proto '=https' --tlsv1.2 -Sf -L "https://direnv.net/install.sh" \
     && chmod +x /tmp/install.sh \
     && sudo bash -c "/tmp/install.sh" \
