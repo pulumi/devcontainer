@@ -35,7 +35,7 @@ gnupg \
 socat \
 libwrap0 \
 gnupg-agent \
-#docker-ce-cli \
+docker-ce-cli \
 manpages-posix \
 build-essential \
 ca-certificates \
