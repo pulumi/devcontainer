@@ -35,13 +35,11 @@ gnupg \
 socat \
 libwrap0 \
 gnupg-agent \
-docker-ce-cli \
 manpages-posix \
 build-essential \
 ca-certificates \
 manpages-posix-dev \
 apt-transport-https \
-#docker-buildx-plugin \
 software-properties-common \
 "
 RUN set -ex \
@@ -49,8 +47,6 @@ RUN set -ex \
     && sudo apt-get install ${APT_PKGS} \
     && sudo apt-get clean \
     && sudo apt-get autoremove -y \
-    && curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add - \
-    && sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable" \
     && sudo apt-get purge -y --auto-remove \
     && sudo rm -rf \
         /var/lib/{apt,dpkg,cache,log} \
@@ -59,6 +55,39 @@ RUN set -ex \
         /root/.cache \
         /var/tmp/* \
         /tmp/* \
+    && true
+
+# Install docker packages for codespaces docker-in-docker
+ARG APT_PKGS="\
+docker-buildx-plugin \
+docker-ce-cli \
+"
+RUN set -ex \
+    && sudo apt-get update \
+    && curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg \
+    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list \
+    && sudo apt-get update \
+    && sudo apt-get install ${APT_PKGS} \
+    && sudo apt-get clean \
+    && sudo apt-get autoremove -y \
+    && sudo apt-get purge -y --auto-remove \
+    && sudo rm -rf \
+        /var/lib/{apt,dpkg,cache,log} \
+        /usr/share/{doc,man,locale} \
+        /var/cache/apt \
+        /root/.cache \
+        /var/tmp/* \
+        /tmp/* \
+    && true
+
+# Install Kind Kubernetes-in-Docker
+RUN set -ex \
+    && export arch=$(uname -m | awk '{ if ($1 == "x86_64") print "amd64"; else if ($1 == "aarch64" || $1 == "arm64") print "arm64"; else print "unknown" }') \
+    && export varVerKind=$(curl -s https://api.github.com/repos/kubernetes-sigs/kind/releases/latest | awk -F '["v,]' '/tag_name/{print $5}') \
+    && export varUrlKind="https://github.com/kubernetes-sigs/kind/releases/download/v${varVerKind}/kind-linux-${arch}" \
+    && sudo curl --output /usr/bin/kind -L ${varUrlKind} \
+    && sudo chmod +x /usr/bin/kind \
+    && /usr/bin/kind version \
     && true
 
 # Install pulumi
