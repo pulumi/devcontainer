@@ -64,8 +64,8 @@ docker-ce-cli \
 "
 RUN set -ex \
     && sudo apt-get update \
-    && curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg \
-    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list \
+    && curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --batch --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg \
+    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null \
     && sudo apt-get update \
     && sudo apt-get install ${APT_PKGS} \
     && sudo apt-get clean \
@@ -88,6 +88,16 @@ RUN set -ex \
     && sudo curl --output /usr/bin/kind -L ${varUrlKind} \
     && sudo chmod +x /usr/bin/kind \
     && /usr/bin/kind version \
+    && true
+
+# Install Kubectl
+RUN set -ex \
+    && export arch=$(uname -m | awk '{ if ($1 == "x86_64") print "amd64"; else if ($1 == "aarch64" || $1 == "arm64") print "arm64"; else print "unknown" }') \
+    && export varVerKubectl="$(curl --silent -L https://storage.googleapis.com/kubernetes-release/release/stable.txt | sed 's/v//g')" \
+    && export varUrlKubectl="https://storage.googleapis.com/kubernetes-release/release/v${varVerKubectl}/bin/linux/${arch}/kubectl" \
+    && sudo curl -L ${varUrlKubectl} --output /bin/kubectl \
+    && sudo chmod +x /bin/kubectl \
+    && kubectl version --client \
     && true
 
 # Install pulumi
@@ -250,7 +260,7 @@ RUN set -ex \
 RUN set -ex \
     && export NODE_MAJOR=20 \
     && curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key \
-        | sudo gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg \
+        | sudo gpg --batch --dearmor -o /etc/apt/keyrings/nodesource.gpg \
     && echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" \
         | sudo tee /etc/apt/sources.list.d/nodesource.list \
     && sudo apt-get update \
