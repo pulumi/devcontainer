@@ -48,24 +48,38 @@ jobs:
                 username: ${{ github.repository_owner }}
                 password: ${{ secrets.GITHUB_TOKEN }}
         -
-            name: Build & Publish Dev Container
-            id: docker_build
+            name: repository_owner to lower case
+            id: repository_owner
+            uses: Entepotenz/change-string-case-action-min-dependencies@v1
+            with:
+                string: ${{ github.repository_owner }}
+        -
+            name: repository to lower case
+            id: repository
+            uses: Entepotenz/change-string-case-action-min-dependencies@v1
+            with:
+                string: ${{ github.repository }}
+        -
+            name: Container Build
             uses: docker/build-push-action@v5
+            id: container-build
             with:
                 push: false
-                load: true
-                context: .
-                file: Dockerfile
+                cache-to: type=inline
+                cache-from: type=registry,ref=ghcr.io/${{ steps.repository.outputs.lowercase }}:${{ github.sha }}
+                context: docker
+                file: docker/Dockerfile
                 platforms: linux/amd64,linux/arm64
-                tags: 'ghcr.io/${{ github.repository_owner }}/devcontainer:latest'
+                tags: "ghcr.io/${{ steps.repository.outputs.lowercase }}:latest,ghcr.io/${{ steps.repository.outputs.lowercase }}:${{ github.sha }}"
         -
-            name: Push Dev Container Image
-            id: docker_push
-            if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+            if: ${{ github.event_name == 'push' }} && ${{ github.ref == 'refs/heads/main' }}
+            name: Container Push
             uses: docker/build-push-action@v5
+            id: container-push
             with:
                 push: true
-                context: ./docker
-                file: ./docker/Dockerfile
+                cache-from: type=inline
+                context: docker
+                file: docker/Dockerfile
                 platforms: linux/amd64,linux/arm64
-                tags: 'ghcr.io/${{ github.repository_owner }}/devcontainer:latest'
+                tags: "ghcr.io/${{ steps.repository.outputs.lowercase }}:latest,ghcr.io/${{ steps.repository.outputs.lowercase }}:${{ github.sha }}"
