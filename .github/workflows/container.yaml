@@ -76,25 +76,27 @@ jobs:
             uses: Entepotenz/change-string-case-action-min-dependencies@v1
             with:
                 string: ${{ github.repository }}
+#       -
+#           name: Build Container Image
+#           id: docker_build
+#           uses: docker/build-push-action@v5
+#           with:
+#               push: false
+#               load: true
+#               cache-to: type=registry,ref=ghcr.io/${{ steps.repository.outputs.lowercase }}:${{ github.sha }}
+#               cache-from: type=registry,ref=ghcr.io/${{ steps.repository.outputs.lowercase }}:${{ github.sha }}
+#               context: docker
+#               file: docker/Dockerfile
+#               platforms: linux/amd64,linux/arm64
+#               tags: "ghcr.io/${{ steps.repository.outputs.lowercase }}:latest,ghcr.io/${{ steps.repository.outputs.lowercase }}:${{ github.sha }}"
         -
-            name: Build & Publish Dev Container
-            id: docker_build
-            uses: docker/build-push-action@v5
-            with:
-                push: false
-                cache-to: type=registry,ref=ghcr.io/${{ steps.repository.outputs.lowercase }}:${{ github.sha }}
-                cache-from: type=registry,ref=ghcr.io/${{ steps.repository.outputs.lowercase }}:${{ github.sha }}
-                context: docker
-                file: docker/Dockerfile
-                platforms: linux/amd64,linux/arm64
-                tags: "ghcr.io/${{ steps.repository.outputs.lowercase }}:latest,ghcr.io/${{ steps.repository.outputs.lowercase }}:${{ github.sha }}"
-        -
-            name: Push Dev Container Image
+            name: Push Container Image
             id: docker_push
             if: ${{ github.event_name == 'push' }} && ${{ github.ref == 'refs/heads/main' }}
             uses: docker/build-push-action@v5
             with:
                 push: true
+                load: false
                 cache-to: type=registry,ref=ghcr.io/${{ steps.repository.outputs.lowercase }}:${{ github.sha }}
                 cache-from: type=registry,ref=ghcr.io/${{ steps.repository.outputs.lowercase }}:${{ github.sha }}
                 context: docker
