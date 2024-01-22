@@ -68,6 +68,10 @@
       ]
     }
   },
+  "features": {
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {}
+  },
+  "mounts": ["source=dind-var-lib-docker,target=/var/lib/docker,type=volume"],
   "remoteUser": "vscode",
   "overrideCommand": false,
   "runArgs": ["--init", "--privileged", "--network=host"],

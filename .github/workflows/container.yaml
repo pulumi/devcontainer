@@ -83,36 +83,52 @@ jobs:
             uses: docker/build-push-action@v5
             with:
                 push: false
-                cache-from: type=registry,ref=ghcr.io/${{ steps.repository.outputs.lowercase }}:latest
-                cache-to: type=inline
+                cache-from: |
+                  type=registry,ref=ghcr.io/${{ steps.repository.outputs.lowercase }}:build-cache
+                  type=registry,ref=ghcr.io/${{ steps.repository.outputs.lowercase }}:latest
+                cache-to: type=inline,mode=max
                 context: ./docker
                 file: ./docker/Dockerfile
                 platforms: linux/amd64,linux/arm64
                 tags: "ghcr.io/${{ steps.repository.outputs.lowercase }}:latest,ghcr.io/${{ steps.repository.outputs.lowercase }}:${{ github.sha }}"
-        
+
         -
             name: Push Container Image
             if: github.event_name == 'push' && github.ref == 'refs/heads/main'
             uses: docker/build-push-action@v5
             with:
                 push: true
-                cache-from: type=registry,ref=ghcr.io/${{ steps.repository.outputs.lowercase }}:latest
-                cache-to: type=inline
+                cache-from: |
+                  type=registry,ref=ghcr.io/${{ steps.repository.outputs.lowercase }}:build-cache
+                  type=registry,ref=ghcr.io/${{ steps.repository.outputs.lowercase }}:latest
+                cache-to: type=registry,ref=ghcr.io/${{ steps.repository.outputs.lowercase }}:build-cache,mode=max
                 context: ./docker
                 file: ./docker/Dockerfile
                 platforms: linux/amd64,linux/arm64
                 tags: "ghcr.io/${{ steps.repository.outputs.lowercase }}:latest,ghcr.io/${{ steps.repository.outputs.lowercase }}:${{ github.sha }}"
 
 #       -
-#           if: ${{ github.event_name == 'push' }} && ${{ github.ref == 'refs/heads/main' }}
-#           name: Container Build & Push
+#           name: Build Container Image
+#           if: github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref != 'refs/heads/main')
 #           uses: docker/build-push-action@v5
-#           id: container-push
 #           with:
-#               push: true
-#               cache-from: type=inline
+#               push: false
+#               cache-from: type=registry,ref=ghcr.io/${{ steps.repository.outputs.lowercase }}:latest
+#               cache-to: type=inline
 #               context: ./docker
 #               file: ./docker/Dockerfile
 #               platforms: linux/amd64,linux/arm64
-#               annotations: '"annotations": { "org.opencontainers.image.description": "Pulumi Devcontainer" }'
+#               tags: "ghcr.io/${{ steps.repository.outputs.lowercase }}:latest,ghcr.io/${{ steps.repository.outputs.lowercase }}:${{ github.sha }}"
+#
+#       -
+#           name: Push Container Image
+#           if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+#           uses: docker/build-push-action@v5
+#           with:
+#               push: true
+#               cache-from: type=registry,ref=ghcr.io/${{ steps.repository.outputs.lowercase }}:latest
+#               cache-to: type=inline
+#               context: ./docker
+#               file: ./docker/Dockerfile
+#               platforms: linux/amd64,linux/arm64
 #               tags: "ghcr.io/${{ steps.repository.outputs.lowercase }}:latest,ghcr.io/${{ steps.repository.outputs.lowercase }}:${{ github.sha }}"
