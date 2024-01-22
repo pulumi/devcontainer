@@ -82,7 +82,7 @@ jobs:
             uses: docker/build-push-action@v5
             with:
                 push: false
-                cache-to: type=inline
+                cache-to: type=registry,ref=ghcr.io/${{ steps.repository.outputs.lowercase }}:${{ github.sha }}
                 cache-from: type=registry,ref=ghcr.io/${{ steps.repository.outputs.lowercase }}:${{ github.sha }}
                 context: docker
                 file: docker/Dockerfile
@@ -95,7 +95,8 @@ jobs:
             uses: docker/build-push-action@v5
             with:
                 push: true
-                cache-from: type=inline
+                cache-to: type=registry,ref=ghcr.io/${{ steps.repository.outputs.lowercase }}:${{ github.sha }}
+                cache-from: type=registry,ref=ghcr.io/${{ steps.repository.outputs.lowercase }}:${{ github.sha }}
                 context: docker
                 file: docker/Dockerfile
                 platforms: linux/amd64,linux/arm64
