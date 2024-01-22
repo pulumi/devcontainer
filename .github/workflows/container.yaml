@@ -106,14 +106,14 @@ jobs:
 
         -
             if: ${{ github.event_name == 'push' }} && ${{ github.ref == 'refs/heads/main' }}
-            name: Container Push
+            name: Container Build & Push
             uses: docker/build-push-action@v5
             id: container-push
             with:
                 push: true
                 cache-from: type=inline
                 context: ./docker
-                file: ./Dockerfile
+                file: ./docker/Dockerfile
                 platforms: linux/amd64,linux/arm64
                 annotations: '"annotations": { "org.opencontainers.image.description": "Pulumi Devcontainer" }'
                 tags: "ghcr.io/${{ steps.repository.outputs.lowercase }}:latest,ghcr.io/${{ steps.repository.outputs.lowercase }}:${{ github.sha }}"

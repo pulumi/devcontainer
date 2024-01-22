@@ -688,13 +688,13 @@ RUN set -ex \
     && rm -rf /tmp/* \
     && true
 
-#################################################################################
-# Load startup artifacts
-COPY ./docker/bin/connect         /bin/
-COPY ./docker/bin/entrypoint      /bin/
-
-#################################################################################
-# Entrypoint & default command
-WORKDIR /workspaces
-ENTRYPOINT /bin/entrypoint
-CMD ["/usr/bin/env", "connect"]
+##################################################################################
+## Load startup artifacts
+#COPY ./docker/bin/connect         /bin/
+#COPY ./docker/bin/entrypoint      /bin/
+#
+##################################################################################
+## Entrypoint & default command
+#WORKDIR /workspaces
+#ENTRYPOINT /bin/entrypoint
+#CMD ["/usr/bin/env", "connect"]
