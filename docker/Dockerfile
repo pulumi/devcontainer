@@ -690,8 +690,8 @@ RUN set -ex \
 
 #################################################################################
 # Load startup artifacts
-COPY bin/connect         /bin/
-COPY bin/entrypoint      /bin/
+COPY ./bin/connect         /bin/
+COPY ./bin/entrypoint      /bin/
 
 #################################################################################
 # Entrypoint & default command
