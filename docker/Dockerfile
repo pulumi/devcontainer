@@ -691,10 +691,10 @@ RUN set -ex \
 #################################################################################
 # Load startup artifacts
 COPY ./bin/connect         /bin/
-#COPY ./bin/entrypoint      /bin/
+COPY ./bin/entrypoint      /bin/
 
 #################################################################################
 # Entrypoint & default command
 WORKDIR /workspaces
-#ENTRYPOINT /bin/entrypoint
+ENTRYPOINT /bin/entrypoint
 CMD ["/usr/bin/env", "connect"]

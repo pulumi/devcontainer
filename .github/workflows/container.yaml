@@ -91,14 +91,14 @@ jobs:
 #               tags: "ghcr.io/${{ steps.repository.outputs.lowercase }}:latest,ghcr.io/${{ steps.repository.outputs.lowercase }}:${{ github.sha }}"
         -
             name: Push Container Image
-            id: docker_push
-            if: ${{ github.event_name == 'push' }} && ${{ github.ref == 'refs/heads/main' }}
+            id: docker_build_push
+            #if: ${{ github.event_name == 'push' }} && ${{ github.ref == 'refs/heads/main' }}
             uses: docker/build-push-action@v5
             with:
                 push: true
-                load: false
-                cache-to: type=registry,ref=ghcr.io/${{ steps.repository.outputs.lowercase }}:${{ github.sha }}
-                cache-from: type=registry,ref=ghcr.io/${{ steps.repository.outputs.lowercase }}:${{ github.sha }}
+                #oad: false
+                #ache-to: type=registry,ref=ghcr.io/${{ steps.repository.outputs.lowercase }}:${{ github.sha }}
+                #ache-from: type=registry,ref=ghcr.io/${{ steps.repository.outputs.lowercase }}:${{ github.sha }}
                 context: docker
                 file: docker/Dockerfile
                 platforms: linux/amd64,linux/arm64
