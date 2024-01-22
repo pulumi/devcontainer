@@ -61,7 +61,7 @@ To add this repository as a submodule to your project, run the following command
 ```bash
 git submodule add https://github.com/pulumi/devcontainer .github/devcontainer
 git submodule update --init --recursive .github/devcontainer
-mkdir .devcontainer && cp .github/devcontainer/.devcontainer/* .devcontainer/
+mkdir .devcontainer && cp -r .github/devcontainer/devcontainer .devcontainer
 ```
 
 To update the devcontainer submodule in consuming repos:

@@ -1,31 +1,74 @@
-# Build Container:
-# - docker build -t ghcr.io/pulumi/devcontainer -f Dockerfile .
+# This is the Base Pulumi Devcontainer Dockerfile
+# FROM the Microsoft Ubuntu 22.04 LTS Devcontainer Base Image
 #
-# Run Container:
-# - docker run -it --rm -v $PWD:/workspaces ghcr.io/pulumi/devcontainer
+# The Pulumi Devcontainer provides a turn key develoepr userspace
+# for use with VSCode, Github Codespaces, and Github Action Runners.
 #
-# Base Image Reference:
-# - https://mcr.microsoft.com/en-us/product/devcontainers/base/about
+# The Pulumi Devcontainer Image is not intended as a production application image
+# and does not adhere to the principle of one service per container but rather
+# is designed for one (developer workflow) purpose per container.
+#
+###############################################################################
+# Use:
+# - docker build --tag ghcr.io/pulumi/devcontainer:latest .
+# - docker run --rm --publish 2222:2222 --publish 7681:7681 --publish 8088:8080 -d --name devcontainer --hostname devcontainer ghcr.io/pulumi/devcontainer:latest
+# - docker run -d --rm --cap-add=CAP_AUDIT_WRITE --publish 2222:2222 --publish 7681:7681 --publish 8088:8080 --name devcontainer --hostname devcontainer --security-opt label=disable --pull=always ghcr.io/pulumi/devcontainer
+# - docker run -it --rm --entrypoint fish --mount type=bind,source=/run/docker.sock,target=/run/docker.sock --privileged --user vscode ghcr.io/pulumi/devcontainer:latest
+###############################################################################
+# Base Image
 
-FROM mcr.microsoft.com/devcontainers/base:ubuntu-22.04
+FROM mcr.microsoft.com/devcontainers/base:ubuntu
 SHELL ["/bin/bash", "-c", "-e"]
 
 # Append rootfs directory tree into container to copy
 # additional files into the container's directory tree
 ADD rootfs /
+ADD rootfs/etc/skel/ /root/
+ADD rootfs/etc/skel/ /home/runner/
+ADD rootfs/etc/skel/ /home/vscode/
+RUN cat /etc/skel/.bashrc > /root/.bashrc && rm /root/.vimrc
+
+#################################################################################
+# Environment Variables
 
 # Disable timezone prompts
 ENV TZ=UTC
 # Disable package manager prompts
 ENV DEBIAN_FRONTEND=noninteractive
 # Add go and nix to path
-ENV PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/local/go/bin:/nix/var/nix/profiles/default/bin"
+ENV PATH="/home/vscode/.krew/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/local/go/bin:/nix/var/nix/profiles/default/bin"
 # Set necessary nix environment variable
 ENV NIX_INSTALLER_EXTRA_CONF='filter-syscalls = false'
-# Default to MS FROM image builtin user
-USER vscode
+# Set default bin directory for new packages
+ARG BIN="/usr/local/bin"
+# Set default binary install command
+ARG INSTALL="install -m 755 -o root -g root"
+# Set additional environment variables
+ENV REGISTRY_AUTH_FILE='/home/vscode/.docker/config.json'
+ENV XDG_CONFIG_HOME=/home/vscode/.config
 
-# Install apt packages
+# Common Dockerfile Container Build Functions
+ARG apt_update="sudo apt-get update"
+ARG apt_install="TERM=linux DEBIAN_FRONTEND=noninteractive sudo apt-get install -q --yes --purge --assume-yes --auto-remove --allow-downgrades -o Dpkg::Options::='--force-confdef' -o Dpkg::Options::='--force-confold'"
+ARG apt_clean="sudo apt-get clean && sudo apt-get autoremove -y && sudo apt-get purge -y --auto-remove"
+ARG curl="/usr/bin/curl --silent --show-error --tlsv1.2 --location"
+ARG curl_github="/usr/bin/curl --silent --show-error --tlsv1.2 --request GET --header "Authorization: Bearer $GITHUB_TOKEN" --header "X-GitHub-Api-Version: 2022-11-28" --url --location"
+ARG dir_clean="\
+sudo rm -rf \
+/var/lib/{apt,cache,log} \
+/usr/share/{doc,man,locale} \
+/var/cache/apt \
+/home/*/.cache \
+/root/.cache \
+/var/tmp/* \
+/tmp/* \
+"
+
+#################################################################################
+# Base package and user configuration
+#################################################################################
+
+# Apt Packages
 ARG APT_PKGS="\
 gh \
 bc \
@@ -58,27 +101,30 @@ xz-utils \
 fontconfig \
 glibc-tools \
 python3-pip \
-build-essential \
+inetutils-ping \
 ca-certificates \
+build-essential \
 libarchive-tools \
-neofetch \
+apt-transport-https \
+software-properties-common \
 "
-RUN echo \
-    && sudo apt-get update \
-    && sudo apt-get install ${APT_PKGS} \
-    && sudo apt-get clean \
-    && sudo apt-get autoremove -y \
-    && sudo apt-get purge -y --auto-remove \
-    && sudo rm -rf \
-        /var/lib/{apt,cache,log} \
-        /usr/share/{doc,man,locale} \
-        /var/cache/apt \
-        /root/.cache \
-        /var/tmp/* \
-        /tmp/* \
-    && echo
 
-# Install docker packages for codespaces docker-in-docker
+# Apt Packages
+RUN echo \
+&& export TEST="gh version" \
+&& ${apt_update} \
+&& bash -c "${apt_install} --no-install-recommends -o Dpkg::Options::='--force-confold' ${APT_PKGS}" \
+&& DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends -o Dpkg::Options::='--force-confold' openssh-server \
+&& mkdir /var/run/sshd \
+&& bash -c "${apt_clean}" \
+&& ${dir_clean} \
+&& ${TEST} \
+&& echo
+
+# Publish Port for SSHD
+EXPOSE 2222
+
+# devcontainer docker-in-docker dependencies
 ARG APT_PKGS="\
 docker-buildx-plugin \
 docker-ce-cli \
@@ -86,287 +132,18 @@ libffi-dev \
 iptables \
 "
 RUN echo \
-    && sudo apt-get update \
-    && curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --batch --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg \
-    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null \
-    && sudo apt-get update \
-    && sudo apt-get install ${APT_PKGS} \
-    && sudo apt-get clean \
-    && sudo apt-get autoremove -y \
-    && sudo apt-get purge -y --auto-remove \
-    && sudo sudo rm -rf \
-        /var/lib/{apt,cache,log} \
-        /usr/share/{doc,man,locale} \
-        /var/cache/apt \
-        /root/.cache \
-        /var/tmp/* \
-        /tmp/* \
-    && echo
-
-# Install Kind Kubernetes-in-Docker
-RUN echo \
-    && export arch=$(uname -m | awk '{ if ($1 == "x86_64") print "amd64"; else if ($1 == "aarch64" || $1 == "arm64") print "arm64"; else print "unknown" }') \
-    && export varVerKind=$(curl -s https://api.github.com/repos/kubernetes-sigs/kind/releases/latest | awk -F '["v,]' '/tag_name/{print $5}') \
-    && export varUrlKind="https://github.com/kubernetes-sigs/kind/releases/download/v${varVerKind}/kind-linux-${arch}" \
-    && sudo curl --output /usr/bin/kind -L ${varUrlKind} \
-    && sudo chmod +x /usr/bin/kind \
-    && /usr/bin/kind version \
-    && echo
-
-# Install Kubectl
-RUN echo \
-    && export arch=$(uname -m | awk '{ if ($1 == "x86_64") print "amd64"; else if ($1 == "aarch64" || $1 == "arm64") print "arm64"; else print "unknown" }') \
-    && export varVerKubectl="$(curl --silent -L https://storage.googleapis.com/kubernetes-release/release/stable.txt | sed 's/v//g')" \
-    && export varUrlKubectl="https://storage.googleapis.com/kubernetes-release/release/v${varVerKubectl}/bin/linux/${arch}/kubectl" \
-    && sudo curl -L ${varUrlKubectl} --output /bin/kubectl \
-    && sudo chmod +x /bin/kubectl \
-    && kubectl version --client \
-    && echo
-
-# Install pulumi
-RUN echo \
-    && export arch=$(uname -m | awk '{ if ($1 == "x86_64") print "x64"; else if ($1 == "aarch64" || $1 == "arm64") print "arm64"; else print "unknown" }') \
-    && export urlPulumiRelease="https://api.github.com/repos/pulumi/pulumi/releases/latest" \
-    && export urlPulumiVersion=$(curl -s ${urlPulumiRelease} | awk -F '["v,]' '/tag_name/{print $5}') \
-    && export urlPulumiBase="https://github.com/pulumi/pulumi/releases/download" \
-    && export urlPulumiBin="pulumi-v${urlPulumiVersion}-linux-${arch}.tar.gz" \
-    && export urlPulumi="${urlPulumiBase}/v${urlPulumiVersion}/${urlPulumiBin}" \
-    && curl -L ${urlPulumi} | tar xzvf - --directory /tmp \
-    && chmod +x /tmp/pulumi/* \
-    && sudo mv /tmp/pulumi/* /usr/local/bin/ \
-    && which pulumi \
-    && pulumi version \
-    && rm -rf /tmp/* \
-    && echo
-
-# Install pulumi esc
-RUN echo \
-    && export arch=$(uname -m | awk '{ if ($1 == "x86_64") print "x64"; else if ($1 == "aarch64" || $1 == "arm64") print "arm64"; else print "unknown" }') \
-    && export urlPulumiRelease="https://api.github.com/repos/pulumi/esc/releases/latest" \
-    && export urlPulumiVersion=$(curl -s ${urlPulumiRelease} | awk -F '["v,]' '/tag_name/{print $5}') \
-    && export urlPulumiBase="https://github.com/pulumi/esc/releases/download" \
-    && export urlPulumiBin="esc-v${urlPulumiVersion}-linux-${arch}.tar.gz" \
-    && export urlPulumi="${urlPulumiBase}/v${urlPulumiVersion}/${urlPulumiBin}" \
-    && curl -L ${urlPulumi} | tar xzvf - --directory /tmp \
-    && chmod +x /tmp/esc/esc \
-    && sudo mv /tmp/esc/esc /usr/local/bin/esc \
-    && which esc \
-    && esc version \
-    && rm -rf /tmp/* \
-    && echo
-
-# Install pulumictl
-RUN echo \
-    && export arch=$(uname -m | awk '{ if ($1 == "x86_64") print "amd64"; else if ($1 == "aarch64" || $1 == "arm64") print "arm64"; else print "unknown" }') \
-    && export urlPulumiRelease="https://api.github.com/repos/pulumi/pulumictl/releases/latest" \
-    && export urlPulumiVersion=$(curl -s ${urlPulumiRelease} | awk -F '["v,]' '/tag_name/{print $5}') \
-    && export urlPulumiBase="https://github.com/pulumi/pulumictl/releases/download" \
-    && export urlPulumiBin="pulumictl-v${urlPulumiVersion}-linux-${arch}.tar.gz" \
-    && export urlPulumi="${urlPulumiBase}/v${urlPulumiVersion}/${urlPulumiBin}" \
-    && curl -L ${urlPulumi} | tar xzvf - --directory /tmp \
-    && chmod +x /tmp/pulumictl \
-    && sudo mv /tmp/pulumictl /usr/local/bin/ \
-    && which pulumictl \
-    && pulumictl version \
-    && rm -rf /tmp/* \
-    && echo
-
-# Install nix
-# BUG: fix qemu buildx github action multi-arch arm64 nix install failure
-RUN echo \
-    && export urlNix="https://install.determinate.systems/nix" \
-    && export arch=$(uname -m | awk '{ if ($1 == "x86_64") print "amd64"; else if ($1 == "aarch64" || $1 == "arm64") print "arm64"; else print "unknown" }') \
-    && curl --proto '=https' --tlsv1.2 -sSf -L ${urlNix} --output /tmp/install.sh \
-    && chmod +x /tmp/install.sh \
-    && /tmp/install.sh install linux --init none --extra-conf "filter-syscalls = false" --no-confirm \
-    && sh -c "nix --version" \
-    && sudo rm -rf /tmp/* \
-    && echo
-
-# Install devbox
-# BUG: depends on Nix installer qemu buildx gha arm64 bug resolution
-# TODO: add devbox version test
-RUN echo \
-    && export urlDevbox="https://get.jetpack.io/devbox" \
-    && export arch=$(uname -m | awk '{ if ($1 == "x86_64") print "amd64"; else if ($1 == "aarch64" || $1 == "arm64") print "arm64"; else print "unknown" }') \
-    && curl --proto '=https' --tlsv1.2 -sSf -L ${urlDevbox} --output /tmp/install.sh \
-    && chmod +x /tmp/install.sh \
-    && /tmp/install.sh -f \
-    && devbox version \
-    && rm -rf /tmp/* \
-    && echo
-
-# Install direnv
-RUN echo \
-    && echo 'eval "$(direnv hook $SHELL)"' | sudo tee -a /etc/skel/.bashrc | tee -a ${HOME}/.bashrc \
-    && curl --output /tmp/install.sh --proto '=https' --tlsv1.2 -Sf -L "https://direnv.net/install.sh" \
-    && chmod +x /tmp/install.sh \
-    && sudo bash -c "/tmp/install.sh" \
-    && direnv --version \
-    && sudo rm -rf /tmp/* \
-    && echo
-
-# Install golang
-ARG GO_PKGS="\
-golang.org/x/tools/gopls@latest \
-github.com/josharian/impl@latest \
-github.com/fatih/gomodifytags@latest \
-github.com/cweill/gotests/gotests@latest \
-github.com/go-delve/delve/cmd/dlv@latest \
-honnef.co/go/tools/cmd/staticcheck@latest \
-github.com/haya14busa/goplay/cmd/goplay@latest \
-"
-RUN echo \
-    && export arch=$(uname -m | awk '{ if ($1 == "x86_64") print "amd64"; else if ($1 == "aarch64" || $1 == "arm64") print "arm64"; else print "unknown" }') \
-    && export goversion="$(curl -s https://go.dev/dl/?mode=json | awk -F'[":go]' '/  "version"/{print $8}' | head -n1)" \
-    && curl -L https://go.dev/dl/go${goversion}.linux-${arch}.tar.gz | sudo tar -C /usr/local/ -xzvf - \
-    && which go \
-    && go version \
-    && for pkg in ${GO_PKGS}; do go install ${pkg}; echo "Installed: ${pkg}"; done \
-    && echo
-
-# Install python
-# TODO: relocate install to devbox
-ARG APT_PKGS="\
-python3 \
-python3-pip \
-python3-venv \
-dotnet-sdk-7.0 \
-dotnet-runtime-7.0 \
-"
-ARG PIP_PKGS="\
-setuptools \
-"
-RUN echo \
-    && sudo apt-get update \
-    && sudo apt-get install ${APT_PKGS} \
-    && sudo update-alternatives --install \
-        /usr/bin/python python \
-        /usr/bin/python3 1 \
-    && sudo python3 -m pip install ${PIP_PKGS} \
-    && sudo apt-get clean \
-    && sudo apt-get autoremove -y \
-    && sudo apt-get purge -y --auto-remove \
-    && sudo rm -rf \
-        /var/lib/{apt,cache,log} \
-        /usr/share/{doc,man,locale} \
-        /var/cache/apt \
-        /root/.cache \
-        /var/tmp/* \
-        /tmp/* \
-    && echo
-
-# Install dotnet
-ARG APT_PKGS="\
-dotnet-sdk-7.0 \
-dotnet-runtime-7.0 \
-"
-RUN echo \
-    && sudo apt-get update \
-    && sudo apt-get install ${APT_PKGS} \
-    && sudo apt-get clean \
-    && sudo apt-get autoremove -y \
-    && sudo apt-get purge -y --auto-remove \
-    && sudo rm -rf \
-        /var/lib/{apt,cache,log} \
-        /usr/share/{doc,man,locale} \
-        /var/cache/apt \
-        /root/.cache \
-        /var/tmp/* \
-        /tmp/* \
-    && echo
-
-# Install nodejs npm yarn
-RUN echo \
-    && export NODE_MAJOR=20 \
-    && curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key \
-        | sudo gpg --batch --dearmor -o /etc/apt/keyrings/nodesource.gpg \
-    && echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" \
-        | sudo tee /etc/apt/sources.list.d/nodesource.list \
-    && sudo apt-get update \
-    && sudo apt-get install nodejs \
-    && sudo apt-get clean \
-    && sudo apt-get autoremove -y \
-    && sudo apt-get purge -y --auto-remove \
-    && sudo rm -rf \
-        /var/lib/{apt,cache,log} \
-        /usr/share/{doc,man,locale} \
-        /var/cache/apt \
-        /root/.cache \
-        /var/tmp/* \
-        /tmp/* \
-    && node --version \
-    && npm --version \
-    && sudo npm install --global yarn \
-    && yarn --version \
-    && echo
-
-# Install hugo
-EXPOSE 1313
-RUN echo \
-    && export arch=$(uname -m | awk '{ if ($1 == "x86_64") print "amd64"; else if ($1 == "aarch64" || $1 == "arm64") print "arm64"; else print "unknown" }') \
-    && export urlHugoRelease="https://api.github.com/repos/gohugoio/hugo/releases/latest" \
-    && export urlHugoVersion=$(curl -s ${urlHugoRelease} | awk -F '["v,]' '/tag_name/{print $5}') \
-    && export urlHugoBase="https://github.com/gohugoio/hugo/releases/download" \
-    && export urlHugoBin="hugo_${urlHugoVersion}_linux-${arch}.deb" \
-    && export urlHugo="${urlHugoBase}/v${urlHugoVersion}/${urlHugoBin}" \
-    && curl --output /tmp/${urlHugoBin} -L ${urlHugo} \
-    && sudo dpkg -i /tmp/${urlHugoBin} \
-    && which hugo \
-    && hugo version \
-    && rm -rf /tmp/* \
-    && echo
-
-# Install helm
-# TODO: relocate install to devcontainer.json
-RUN echo \
-    && export varVerHelm="$(curl -s https://api.github.com/repos/helm/helm/releases/latest | awk -F '[\"v,]' '/tag_name/{print $5}')" \
-    && export varUrlHelm="https://get.helm.sh/helm-v${varVerHelm}-linux-amd64.tar.gz" \
-    && curl -L ${varUrlHelm} | tar xzvf - --directory /tmp linux-amd64/helm \
-    && chmod +x /tmp/linux-amd64/helm \
-    && sudo mv /tmp/linux-amd64/helm /usr/local/bin/helm \
-    && helm version \
-    && rm -rf /tmp/linux-amd64 \
-    && echo
-
-WORKDIR /workspaces
-CMD ["/usr/bin/zsh"]
-
-# GHCR Labels
-LABEL org.opencontainers.image.licenses="APACHE2"
-LABEL org.opencontainers.image.source="https://github.com/pulumi/devcontainer"
-LABEL org.opencontainers.image.description="A containerized environment for developing and running pulumi IaC and Provider code"
-
-# General Labels
-ARG VERSION
-ARG BUILD_DATE
-LABEL \
-    org.opencontainers.image.version=$VERSION \
-    org.opencontainers.image.created=$BUILD_DATE \
-    org.opencontainers.image.vendor="Pulumi" \
-    org.opencontainers.image.title="Pulumi Dev Container" \
-    org.opencontainers.image.url="https://github.com/pulumi/devcontainer" \
-    org.opencontainers.image.documentation="https://github.com/pulumi/devcontainer" \
-    org.opencontainers.image.authors="https://github.com/pulumi"
-
-##################################################################################
-# Common Functions
-ARG curl="/usr/bin/curl --silent --show-error --tlsv1.2 --location"
-ARG INSTALL="install -m 755 -o root -g root"
-ARG BIN="/usr/local/bin"
-ARG dir_clean="\
-sudo rm -rf \
-/var/lib/{apt,cache,log} \
-/usr/share/{doc,man,locale} \
-/var/cache/apt \
-/home/*/.cache \
-/root/.cache \
-/var/tmp/* \
-/tmp/* \
-"
+&& ${curl} https://download.docker.com/linux/ubuntu/gpg | sudo gpg --batch --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg \
+&& echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list \
+&& ${apt_update} \
+&& bash -c "${apt_install} ${APT_PKGS}" \
+&& bash -c "${apt_clean}" \
+&& ${dir_clean} \
+&& sudo update-alternatives --set iptables /usr/sbin/iptables-legacy \
+&& sudo update-alternatives --set ip6tables /usr/sbin/ip6tables-legacy \
+&& echo
 
 # jq
-RUN set -ex; echo \
+RUN echo \
 && export NAME="jq" \
 && export TEST="${NAME} --version" \
 && export REPOSITORY="jqlang/jq" \
@@ -387,6 +164,373 @@ RUN set -ex; echo \
 && ${TEST} \
 && echo
 
+# Nix
+RUN echo \
+&& export NAME=nix-installer \
+&& export TEST="${NAME} --version" \
+&& export REPOSITORY="DeterminateSystems/nix-installer" \
+&& export VERSION="$(${curl_github} https://api.github.com/repos/${REPOSITORY}/releases/latest | jq --raw-output .tag_name)" \
+&& export ARCH=$(uname -m | awk '{ if ($1 == "x86_64") print "x86_64"; else if ($1 == "aarch64" || $1 == "arm64") print "aarch64"; else print "unknown" }') \
+&& export PKG="${NAME}-${ARCH}-linux" \
+&& export URL="https://github.com/${REPOSITORY}/releases/download/${VERSION}/${PKG}" \
+&& echo "INFO[${NAME}] Installed:" \
+&& echo "INFO[${NAME}]   Command:        ${NAME}" \
+&& echo "INFO[${NAME}]   Package:        ${PKG}" \
+&& echo "INFO[${NAME}]   Latest Release: ${VERSION}" \
+&& echo "INFO[${NAME}]   Architecture:   ${ARCH}" \
+&& echo "INFO[${NAME}]   Source:         ${URL}" \
+&& sudo ${curl} ${URL} --output /tmp/${NAME} \
+&& sudo ${INSTALL} /tmp/${NAME} ${BIN}/${NAME} \
+&& ${NAME} install linux --init none --no-confirm --extra-conf "filter-syscalls = false" \
+&& bash -c "${TEST}" \
+&& ${dir_clean} \
+&& ${TEST} \
+&& echo
+
+# direnv
+RUN echo \
+&& export NAME="direnv"\
+&& export PKG="install.sh"\
+&& export URL="https://direnv.net/${PKG}"\
+&& export TEST="${NAME} --version"\
+&& echo "INFO[${NAME}] Install Package:"\
+&& echo "INFO[${NAME}]  Command: ${NAME}"\
+&& echo "INFO[${NAME}]  Package: ${PKG}"\
+&& echo "INFO[${NAME}]  Source:  ${URL}"\
+&& ${curl} ${URL} --output /tmp/${PKG} \
+&& chmod +x /tmp/${PKG} \
+&& sudo bash -c "/tmp/${PKG}" \
+&& ${dir_clean} \
+&& ${TEST} \
+&& echo
+
+# Starship
+RUN echo \
+&& export NAME=starship \
+&& export TEST="${NAME} --version" \
+&& export URL="https://starship.rs/install.sh" \
+&& ${curl} ${URL} --output /tmp/${NAME} \
+&& chmod +x /tmp/${NAME} \
+&& bash -c "/tmp/${NAME} --verbose --yes" \
+&& ${dir_clean} \
+&& ${TEST} \
+&& echo
+
+#################################################################################
+# Create Users and Groups
+# Create User: runner (for github actions runner support)
+
+RUN echo \
+&& sudo mkdir -p /etc/sudoers.d || true \
+&& sudo groupadd --force --system sudo || true \
+&& sudo groupadd --force --gid 127 --system docker \
+&& sudo echo "%sudo ALL=(ALL:ALL) NOPASSWD: ALL" > /etc/sudoers.d/sudo \
+&& sudo echo "%runner ALL=(ALL:ALL) NOPASSWD: ALL" > /etc/sudoers.d/sudo \
+&& sudo echo "%vscode ALL=(ALL:ALL) NOPASSWD: ALL" > /etc/sudoers.d/sudo \
+&& echo
+
+# Set User & Workdir default to $HOME
+USER vscode
+WORKDIR /home/vscode
+
+# Adduser:
+# - user:   vscode
+# - group:  vscode
+# - uid:    1000
+# - gid:    1000
+RUN echo \
+&& export USER_ID="1000" \
+&& export USER_NAME="vscode" \
+&& export USER_SHELL="fish" \
+&& export USER_GROUPS="${USER_NAME},sudo,docker,vscode" \
+&& export USER_GROUP_NAME="${USER_NAME}" \
+&& export USER_GROUP_ID="${USER_ID}" \
+&& echo "INFO[${USER_NAME}]  User:" \
+&& echo "INFO[${USER_NAME}]    User Name:   ${USER_NAME}" \
+&& echo "INFO[${USER_NAME}]    User Group:  ${USER_GROUP_NAME}" \
+&& echo "INFO[${USER_NAME}]    Aux Groups:  ${USER_GROUPS}" \
+&& echo "INFO[${USER_NAME}]    Group ID:    ${USER_GROUP_ID}" \
+&& echo "INFO[${USER_NAME}]    User ID:     ${USER_ID}" \
+&& echo "INFO[${USER_NAME}]    SHELL:       $(which ${USER_SHELL})" \
+&& echo "${USER_NAME} ALL=(ALL:ALL) NOPASSWD: ALL" | sudo tee -a /etc/sudoers \
+&& sudo groupadd --force --gid ${USER_ID} ${USER_NAME} \
+&& sudo useradd --create-home --uid ${USER_ID} --gid ${USER_GROUP_ID} --shell $(which ${USER_SHELL}) --groups ${USER_GROUPS} ${USER_NAME} || true \
+&& sudo usermod --append --groups ${USER_GROUPS} ${USER_NAME} \
+&& sudo chsh --shell $(which ${USER_SHELL}) ${USER_NAME} \
+&& sudo mkdir -p /home/vscode/.krew/bin \
+&& sudo chmod 0755 -R /home/vscode/.krew/bin \
+&& sudo chown ${USER_NAME}:${USER_NAME} -R /home/vscode/.krew/bin \
+&& sudo su --preserve-environment --shell $(which ${USER_SHELL}) -c groups ${USER_NAME} 2>/dev/null \
+&& sudo chmod 0775 /usr/local/lib \
+&& sudo rm -rf /usr/local/lib/node_modules \
+&& sudo mkdir -p /usr/local/lib/node_modules \
+&& echo
+
+RUN sudo chown vscode:vscode -R /home/vscode
+
+# Adduser:
+# - user:   runner
+# - group:  runner
+# - uid:    1001
+# - gid:    1001
+RUN echo \
+&& export USER_ID="1001" \
+&& export USER_NAME="runner" \
+&& export USER_SHELL="bash" \
+&& export USER_GROUPS="sudo,docker,vscode,runner" \
+&& export USER_GROUP_ID="${USER_ID}" \
+&& echo "INFO[${USER_NAME}:${USER_ID}:${USER_GROUPS}] User:" \
+&& echo "INFO[${USER_NAME}:${USER_ID}:${USER_GROUPS}]   UID:         ${USER_ID}" \
+&& echo "INFO[${USER_NAME}:${USER_ID}:${USER_GROUPS}]   NAME:        ${USER_NAME}" \
+&& echo "INFO[${USER_NAME}:${USER_ID}:${USER_GROUPS}]   SHELL:       $(which ${USER_SHELL})" \
+&& echo "INFO[${USER_NAME}:${USER_ID}:${USER_GROUPS}]   USER GROUP:  ${USER_GROUP_ID}" \
+&& echo "INFO[${USER_NAME}:${USER_ID}:${USER_GROUPS}]   AUX GROUPS:  ${USER_GROUPS}" \
+&& sudo groupadd --force --gid ${USER_ID} ${USER_NAME} \
+&& sudo echo "${USER_NAME} ALL=(ALL:ALL) NOPASSWD: ALL" | sudo tee -a /etc/sudoers \
+&& sudo useradd --create-home --uid ${USER_ID} --gid ${USER_GROUP_ID} --shell $(which ${USER_SHELL}) --groups ${USER_GROUPS} ${USER_NAME} \
+&& sudo chsh --shell $(which ${USER_SHELL}) ${USER_NAME} \
+&& sudo usermod --append --groups ${USER_GROUPS} ${USER_NAME} \
+&& sudo usermod --append --groups ${USER_GROUPS} vscode \
+&& sudo su --preserve-environment --shell $(which ${USER_SHELL}) -c groups ${USER_NAME} \
+&& sudo chown runner:runner -R /home/runner \
+&& sudo chmod 755 /home/vscode/.* \
+&& echo
+
+RUN sudo chown runner:runner -R /home/runner
+
+##################################################################################
+# Install Creature Comforts
+
+# Oh My Fish (OMF)
+RUN echo \
+&& export URL="https://raw.githubusercontent.com/oh-my-fish/oh-my-fish/master/bin/install" \
+&& ${curl} ${URL} --output /tmp/install \
+&& fish -c '. /tmp/install --noninteractive' \
+&& ${dir_clean} \
+&& echo
+
+# Vim Plugins
+RUN echo \
+&& /bin/bash -c "vim -T dumb -n -i NONE -es -S <(echo -e 'silent! PluginInstall')" \
+&& git clone https://github.com/VundleVim/Vundle.vim.git ~/.vim/bundle/Vundle.vim \
+&& vim -E -u NONE -S ~/.vimrc +PluginInstall +qall \
+&& echo
+
+# TMUX Plugins
+RUN echo \
+&& ~/.tmux/plugins/tpm/bin/install_plugins || true \
+&& echo
+
+# NerdFonts: FiraCode Nerd Font Mono
+RUN echo \
+&& export NAME=FiraMonoNerdFont \
+&& export TEST="fc-list --quiet ${NAME}" \
+&& export REPOSITORY="ryanoasis/nerd-fonts" \
+&& export VERSION="$(${curl_github} https://api.github.com/repos/${REPOSITORY}/releases/latest | jq --raw-output .tag_name)" \
+&& export ARCH="$(uname -m | awk '{ if ($1 == "x86_64") print "amd64"; else if ($1 == "aarch64" || $1 == "arm64") print "arm64"; else print "unknown" }')" \
+&& export PKG="FiraMono.zip" \
+&& export URL="https://github.com/${REPOSITORY}/releases/download/${VERSION}/${PKG}" \
+&& export DIR="/usr/share/fonts/truetype/firacode" \
+&& echo "INFO[${NAME}] Installed:" \
+&& echo "INFO[${NAME}]   Command:        ${NAME}" \
+&& echo "INFO[${NAME}]   Package:        ${PKG}" \
+&& echo "INFO[${NAME}]   Latest Release: ${VERSION}" \
+&& echo "INFO[${NAME}]   Architecture:   ${ARCH}" \
+&& echo "INFO[${NAME}]   Source:         ${URL}" \
+&& ${curl} ${URL} --output /tmp/fonts.zip \
+&& sudo mkdir -p $DIR \
+&& sudo rm -rf $DIR/* \
+&& sudo unzip /tmp/fonts.zip -d /usr/share/fonts/truetype/firacode \
+&& sudo fc-cache -f -v \
+&& fc-list : family | sort | uniq \
+&& ${dir_clean} \
+&& ${TEST} \
+&& echo
+
+#################################################################################
+# Install Programming Language Tooling
+# - golang
+# - nodejs
+# - python
+# - dotnet
+#################################################################################
+
+# Install nodejs npm yarn
+RUN echo \
+&& export NODE_MAJOR=20 \
+&& ${curl} https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key \
+    | sudo gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg \
+&& echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" \
+    | sudo tee /etc/apt/sources.list.d/nodesource.list \
+&& sudo apt-get update \
+&& sudo apt-get install nodejs \
+&& sudo apt-get clean \
+&& sudo apt-get autoremove -y \
+&& sudo apt-get purge -y --auto-remove \
+&& ${dir_clean} \
+&& node --version \
+&& npm --version \
+&& sudo npm install --global yarn \
+&& yarn --version \
+&& true
+
+# Python
+ARG APT_PKGS="\
+python3 \
+python3-pip \
+python3-venv \
+"
+RUN echo \
+&& bash -c "${apt_install} ${APT_PKGS}" \
+&& bash -c "${apt_clean}" \
+&& sudo update-alternatives --install \
+    /usr/bin/python python \
+    /usr/bin/python3 1 \
+&& ${dir_clean} \
+&& echo
+
+# Python Pip Packages
+ARG PIP_PKGS="\
+setuptools \
+"
+RUN echo \
+&& sudo python3 -m pip install ${PIP_PKGS} \
+&& ${dir_clean} \
+&& echo
+
+# Dotnet
+ARG APT_PKGS="\
+dotnet-sdk-7.0 \
+dotnet-runtime-7.0 \
+"
+RUN echo \
+&& bash -c "${apt_install} ${APT_PKGS}" \
+&& bash -c "${apt_clean}" \
+&& ${dir_clean} \
+&& echo
+
+# Golang
+RUN echo ;set -ex \
+&& jq --version \
+&& export NAME="go" \
+&& export TEST="${NAME} version" \
+&& export VERSION="$(${curl} "https://go.dev/dl/?mode=json" | jq --compact-output --raw-output .[1].version)" \
+&& export ARCH=$(uname -m | awk '{ if ($1 == "x86_64") print "amd64"; else if ($1 == "aarch64" || $1 == "arm64") print "arm64"; else print "unknown" }') \
+&& export PKG="${VERSION}.linux-${ARCH}.tar.gz" \
+&& export URL="https://go.dev/dl/${PKG}" \
+&& echo "INFO[${NAME}] Installed:" \
+&& echo "INFO[${NAME}]   Command:        ${NAME}" \
+&& echo "INFO[${NAME}]   Package:        ${PKG}" \
+&& echo "INFO[${NAME}]   Latest Release: ${VERSION}" \
+&& echo "INFO[${NAME}]   Architecture:   ${ARCH}" \
+&& echo "INFO[${NAME}]   Source:         ${URL}" \
+&& ${curl} ${URL} | sudo tar -C /usr/local/ -xzvf - \
+&& sudo chmod 755 /usr/local/go/bin/* \
+&& ${TEST} \
+&& echo
+
+#################################################################################
+# Image Metadata
+LABEL name="pulumi-devcontainer"
+LABEL distribution-scope="public"
+LABEL io.k8s.display-name="Pulumi"
+LABEL org.opencontainers.image.authors="github.com/pulumi"
+LABEL org.opencontainers.image.source="https://github.com/pulumi/devcontainer"
+LABEL org.opencontainers.image.description="A containerized environment for developing and running pulumi IaC and Provider code"
+LABEL org.opencontainers.image.licenses="APACHE2"
+LABEL maintainer="github.com/pulumi"
+
+################################################################################
+# Install Pulumi CLI, ESC, & CTL
+# Install Pulumi CLI Utilities and Pulumi go deps
+ARG GO_PKGS="\
+golang.org/x/tools/gopls@latest \
+github.com/josharian/impl@latest \
+github.com/fatih/gomodifytags@latest \
+github.com/cweill/gotests/gotests@latest \
+github.com/go-delve/delve/cmd/dlv@latest \
+honnef.co/go/tools/cmd/staticcheck@latest \
+github.com/haya14busa/goplay/cmd/goplay@latest \
+"
+RUN echo \
+&& export NAME=pulumi \
+&& export TEST="pulumi version" \
+&& export REPOSITORY="pulumi/pulumi" \
+&& export VERSION="$(${curl} https://api.github.com/repos/${REPOSITORY}/releases/latest | jq --raw-output .tag_name)" \
+&& export ARCH=$(uname -m | awk '{ if ($1 == "x86_64") print "x64"; else if ($1 == "aarch64" || $1 == "arm64") print "arm64"; else print "unknown" }') \
+&& export PKG="${NAME}-${VERSION}-linux-${ARCH}.tar.gz" \
+&& export URL="https://github.com/${REPOSITORY}/releases/download/${VERSION}/${PKG}" \
+&& echo "---------------------------------------------------------"\
+&& echo "INFO[${NAME}] Installed:" \
+&& echo "INFO[${NAME}]   Command:        ${NAME}" \
+&& echo "INFO[${NAME}]   Package:        ${PKG}" \
+&& echo "INFO[${NAME}]   Latest Release: ${VERSION}" \
+&& echo "INFO[${NAME}]   Architecture:   ${ARCH}" \
+&& echo "INFO[${NAME}]   Source:         ${URL}" \
+&& echo "---------------------------------------------------------"\
+&& ${curl} ${URL} | tar xzvf - --directory /tmp \
+&& sudo chmod 755 /tmp/pulumi/* \
+&& sudo chown root:root /tmp/pulumi/* \
+&& sudo mv /tmp/pulumi/* /usr/local/bin/ \
+&& echo "+-------------------------------------------------------+"\
+&& echo "|       Installing Basic Pulumi Golang Deps             |"\
+&& echo "+-------------------------------------------------------+"\
+&& for pkg in ${GO_PKGS}; do go install ${pkg}; echo "Installed: ${pkg}"; done \
+&& ${dir_clean} \
+&& ${TEST} \
+&& echo
+
+# Install pulumi esc
+RUN echo \
+&& export NAME="esc" \
+&& export TEST="esc version" \
+&& export REPOSITORY="pulumi/esc" \
+&& export VERSION="$(${curl} https://api.github.com/repos/${REPOSITORY}/releases/latest | jq --raw-output .tag_name)" \
+&& export ARCH=$(uname -m | awk '{ if ($1 == "x86_64") print "x64"; else if ($1 == "aarch64" || $1 == "arm64") print "arm64"; else print "unknown" }') \
+&& export PKG="${NAME}-${VERSION}-linux-${ARCH}.tar.gz" \
+&& export URL="https://github.com/${REPOSITORY}/releases/download/${VERSION}/${PKG}" \
+&& echo "---------------------------------------------------------"\
+&& echo "INFO[${NAME}] Installed:" \
+&& echo "INFO[${NAME}]   Command:        ${NAME}" \
+&& echo "INFO[${NAME}]   Package:        ${PKG}" \
+&& echo "INFO[${NAME}]   Latest Release: ${VERSION}" \
+&& echo "INFO[${NAME}]   Architecture:   ${ARCH}" \
+&& echo "INFO[${NAME}]   Source:         ${URL}" \
+&& echo "---------------------------------------------------------"\
+&& ${curl} ${URL} | tar xzvf - --directory /tmp \
+&& sudo ${INSTALL} /tmp/${NAME}/${NAME} ${BIN}/${NAME} \
+&& ${dir_clean} \
+&& ${TEST} \
+&& echo
+
+# Install pulumictl
+RUN echo \
+&& export NAME="pulumictl" \
+&& export TEST="${NAME} version" \
+&& export REPOSITORY="pulumi/pulumictl" \
+&& export VERSION="$(${curl} https://api.github.com/repos/${REPOSITORY}/releases/latest | jq --raw-output .tag_name)" \
+&& export ARCH=$(uname -m | awk '{ if ($1 == "x86_64") print "amd64"; else if ($1 == "aarch64" || $1 == "arm64") print "arm64"; else print "unknown" }') \
+&& export PKG="${NAME}-${VERSION}-linux-${ARCH}.tar.gz" \
+&& export URL="https://github.com/${REPOSITORY}/releases/download/${VERSION}/${PKG}" \
+&& echo "---------------------------------------------------------"\
+&& echo "INFO[${NAME}] Installed:" \
+&& echo "INFO[${NAME}]   Command:        ${NAME}" \
+&& echo "INFO[${NAME}]   Package:        ${PKG}" \
+&& echo "INFO[${NAME}]   Latest Release: ${VERSION}" \
+&& echo "INFO[${NAME}]   Architecture:   ${ARCH}" \
+&& echo "INFO[${NAME}]   Source:         ${URL}" \
+&& echo "---------------------------------------------------------"\
+&& ${curl} ${URL} | tar xzvf - --directory /tmp \
+&& sudo ${INSTALL} /tmp/${NAME} ${BIN}/${NAME} \
+&& ${dir_clean} \
+&& ${TEST} \
+&& echo
+
+##################################################################################
+#### Common Binary Install Arguments
+##################################################################################
+
+##################################################################################
 # Insall Github Actions Local Testing CLI
 # - https://nektosact.com
 # - https://github.com/nektos/gh-act
@@ -411,3 +555,146 @@ RUN echo \
 && ${dir_clean} \
 && ${TEST} \
 && echo
+
+##################################################################################
+# Install Kubectl
+# - https://kubernetes.io
+# - github.com/kubernetes/kubernetes
+RUN echo \
+&& export NAME=kubectl \
+&& export TEST="${NAME} version --client" \
+&& export REPOSITORY="kubernetes/kubernetes" \
+&& export VERSION="$(${curl} https://api.github.com/repos/${REPOSITORY}/releases/latest | jq --raw-output .tag_name)" \
+&& export ARCH=$(uname -m | awk '{ if ($1 == "x86_64") print "amd64"; else if ($1 == "aarch64" || $1 == "arm64") print "arm64"; else print "unknown" }') \
+&& export PKG="${NAME}" \
+&& export URL="https://storage.googleapis.com/kubernetes-release/release/${VERSION}/bin/linux/${ARCH}/${PKG}" \
+&& echo "---------------------------------------------------------"\
+&& echo "INFO[${NAME}] Installed:" \
+&& echo "INFO[${NAME}]   Command:        ${NAME}" \
+&& echo "INFO[${NAME}]   Package:        ${PKG}" \
+&& echo "INFO[${NAME}]   Latest Release: ${VERSION}" \
+&& echo "INFO[${NAME}]   Architecture:   ${ARCH}" \
+&& echo "INFO[${NAME}]   Source:         ${URL}" \
+&& echo "---------------------------------------------------------"\
+&& sudo ${curl} ${URL} --output /tmp/${NAME} \
+&& sudo ${INSTALL} /tmp/kubectl ${BIN}/${NAME} \
+&& ${dir_clean} \
+&& ${TEST} \
+&& echo
+
+##################################################################################
+# Install Krew
+ARG KREW_PKG="\
+view-utilization \
+view-secret \
+view-cert \
+rook-ceph \
+open-svc \
+whoami \
+konfig \
+ktop \
+neat \
+tail \
+ctx \
+ns \
+"
+RUN echo \
+&& export NAME=krew \
+&& export TEST="kubectl ${NAME} version" \
+&& export REPOSITORY="kubernetes-sigs/${NAME}" \
+&& export ARCH=$(uname -m | awk '{ if ($1 == "x86_64") print "amd64"; else if ($1 == "aarch64" || $1 == "arm64") print "arm64"; else print "unknown" }') \
+&& export VERSION="$(${curl} https://api.github.com/repos/${REPOSITORY}/releases/latest | jq --raw-output .tag_name)" \
+&& export PKG="${NAME}-linux_${ARCH}.tar.gz" \
+&& export URL="https://github.com/${REPOSITORY}/releases/download/${VERSION}/${PKG}" \
+&& echo "---------------------------------------------------------"\
+&& echo "INFO[${NAME}] Installed:" \
+&& echo "INFO[${NAME}]   Command: (kubectl) ${NAME}" \
+&& echo "INFO[${NAME}]   Package:           ${PKG}" \
+&& echo "INFO[${NAME}]   Latest Release:    ${VERSION}" \
+&& echo "INFO[${NAME}]   Architecture:      ${ARCH}" \
+&& echo "INFO[${NAME}]   Source:            ${URL}" \
+&& echo "---------------------------------------------------------"\
+&& ${curl} ${URL} | tar xzvf - --directory /tmp ./${NAME}-linux_${ARCH} \
+&& sudo ${INSTALL} /tmp/${NAME}-linux_${ARCH} ${BIN}/kubectl-${NAME} \
+&& for pkg in ${CODE_PKGS}; do kubectl ${NAME} install ${pkg}; echo "Installed: ${pkg}"; done \
+&& ${dir_clean} \
+&& ${TEST} \
+&& echo
+
+##################################################################################
+# Install Kind Kubernetes-in-Docker
+RUN echo \
+&& export NAME=kind \
+&& export TEST="${NAME} version" \
+&& export REPOSITORY="kubernetes-sigs/kind" \
+&& export VERSION="$(${curl} https://api.github.com/repos/${REPOSITORY}/releases/latest | jq --raw-output .tag_name)" \
+&& export ARCH="$(uname -m | awk '{ if ($1 == "x86_64") print "amd64"; else if ($1 == "aarch64" || $1 == "arm64") print "arm64"; else print "unknown" }')" \
+&& export PKG="${NAME}-linux-${ARCH}" \
+&& export URL="https://github.com/${REPOSITORY}/releases/download/${VERSION}/${PKG}" \
+&& echo "---------------------------------------------------------"\
+&& echo "INFO[${NAME}] Installed:" \
+&& echo "INFO[${NAME}]   Command:        ${NAME}" \
+&& echo "INFO[${NAME}]   Package:        ${PKG}" \
+&& echo "INFO[${NAME}]   Latest Release: ${VERSION}" \
+&& echo "INFO[${NAME}]   Architecture:   ${ARCH}" \
+&& echo "INFO[${NAME}]   Source:         ${URL}" \
+&& echo "---------------------------------------------------------"\
+&& ${curl} ${URL} --output /tmp/${NAME} \
+&& sudo ${INSTALL} /tmp/${NAME} ${BIN}/${NAME} \
+&& ${dir_clean} \
+&& ${TEST} \
+&& echo
+
+##################################################################################
+# Insall helm cli
+# - https://helm.sh
+# - https://github.com/helm/helm
+RUN echo \
+&& export NAME=helm \
+&& export TEST="${NAME} version" \
+&& export REPOSITORY="helm/helm" \
+&& export VERSION="$(${curl} https://api.github.com/repos/${REPOSITORY}/releases/latest | jq --raw-output .tag_name)" \
+&& export ARCH=$(uname -m | awk '{ if ($1 == "x86_64") print "amd64"; else if ($1 == "aarch64" || $1 == "arm64") print "arm64"; else print "unknown" }') \
+&& export PKG="${NAME}-${VERSION}-linux-${ARCH}.tar.gz" \
+&& export URL="https://get.helm.sh/${PKG}" \
+&& echo "---------------------------------------------------------"\
+&& echo "INFO[${NAME}] Installed:" \
+&& echo "INFO[${NAME}]   Command:        ${NAME}" \
+&& echo "INFO[${NAME}]   Package:        ${PKG}" \
+&& echo "INFO[${NAME}]   Latest Release: ${VERSION}" \
+&& echo "INFO[${NAME}]   Architecture:   ${ARCH}" \
+&& echo "INFO[${NAME}]   Source:         ${URL}" \
+&& echo "---------------------------------------------------------"\
+&& ${curl} ${URL} | tar xzvf - --directory /tmp linux-${ARCH}/${NAME} \
+&& sudo ${INSTALL} /tmp/linux-${ARCH}/${NAME} ${BIN}/${NAME} \
+&& ${dir_clean} \
+&& ${TEST} \
+&& echo
+
+##################################################################################
+# Install hugo
+EXPOSE 1313
+RUN set -ex \
+    && export arch=$(uname -m | awk '{ if ($1 == "x86_64") print "amd64"; else if ($1 == "aarch64" || $1 == "arm64") print "arm64"; else print "unknown" }') \
+    && export urlHugoRelease="https://api.github.com/repos/gohugoio/hugo/releases/latest" \
+    && export urlHugoVersion=$(curl -s ${urlHugoRelease} | awk -F '["v,]' '/tag_name/{print $5}') \
+    && export urlHugoBase="https://github.com/gohugoio/hugo/releases/download" \
+    && export urlHugoBin="hugo_${urlHugoVersion}_linux-${arch}.deb" \
+    && export urlHugo="${urlHugoBase}/v${urlHugoVersion}/${urlHugoBin}" \
+    && curl --output /tmp/${urlHugoBin} -L ${urlHugo} \
+    && sudo dpkg -i /tmp/${urlHugoBin} \
+    && which hugo \
+    && hugo version \
+    && rm -rf /tmp/* \
+    && true
+
+#################################################################################
+# Load startup artifacts
+COPY bin/connect         /bin/
+COPY bin/entrypoint      /bin/
+
+#################################################################################
+# Entrypoint & default command
+WORKDIR /workspaces
+ENTRYPOINT /bin/entrypoint
+CMD ["/usr/bin/env", "connect"]
