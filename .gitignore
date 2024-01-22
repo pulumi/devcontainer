@@ -1,2 +1,3 @@
 .pulumi/*
 .kube/*
+frontmatter.json

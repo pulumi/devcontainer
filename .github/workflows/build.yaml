@@ -9,7 +9,7 @@
 #   ~$ gh extension install nektos/gh-act
 #   ~$ gh act --env-file .env -s GITHUB_TOKEN=$GITHUB_TOKEN -s PULUMI_ACCESS_TOKEN=$PULUMI_ACCESS_TOKEN
 
-name: Pulumi Devcontainer Build Status
+name: Pulumi Devcontainer Build
 on:
     workflow_dispatch:
     push:

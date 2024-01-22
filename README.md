@@ -2,9 +2,9 @@
 
 [![License](https://img.shields.io/github/license/usrbinkat/iac-mesh-pac)]() [![Pulumi](https://img.shields.io/badge/pulumi-v3.102.0-blueviolet)](https://www.pulumi.com/docs/get-started/install/) [![Kubectl](https://img.shields.io/badge/kubectl-v1.26.13-blueviolet)](https://kubernetes.io/docs/tasks/tools/install-kubectl/) [![Docker](https://img.shields.io/badge/docker-v25.0.0-blueviolet)](https://docs.docker.com/get-docker/) [![Kind](https://img.shields.io/badge/kind-v0.20.0-blueviolet)](https://kind.sigs.k8s.io/docs/user/quick-start/) [![Helm](https://img.shields.io/badge/helm-v3.14.0-blueviolet)](https://helm.sh/docs/intro/install/)
 
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/pulumi/devcontainer?quickstart=1)
-
 [![Pulumi Devcontainer Build Status](https://github.com/pulumi/devcontainer/actions/workflows/build.yaml/badge.svg)](https://github.com/pulumi/devcontainer/actions/workflows/build.yaml)
+
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/pulumi/devcontainer?quickstart=1)
 
 This is a [Github Template Repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-repository-from-a-template) which provides a Pulumi [Devcontainer](https://code.visualstudio.com/docs/devcontainers/containers) together with GitOps ready boilerplate for quickly starting new Pulumi IaC projects.
 
