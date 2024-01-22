@@ -71,10 +71,10 @@
   "features": {
     "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {}
   },
+  "mounts": ["source=dind-var-lib-docker,target=/var/lib/docker,type=volume"],
   "remoteUser": "vscode",
   "forwardPorts": [1313, 2222, 6000, 7681, 8080],
   "postCreateCommand": "sudo chown $USER /workspaces/* 2>/dev/null || true; direnv allow 2>/dev/null || true",
-  "mounts": ["source=dind-var-lib-docker,target=/var/lib/docker,type=volume"],
   "runArgs": ["--init", "--privileged", "--network=host"],
   "overrideCommand": false
 }
