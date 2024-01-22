@@ -87,7 +87,7 @@ kind:
 devcontainer::
 	git submodule update --init --recursive .github/devcontainer
 	git submodule update --remote --merge .github/devcontainer
-	cp .devcontainer/devcontainer.json .devcontainer.json
+	rsync -av .github/devcontainer/devcontainer/* .devcontainer
 
 # --- Default Command ---
 # Default command when running 'make' without arguments
