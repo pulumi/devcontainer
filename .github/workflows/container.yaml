@@ -9,25 +9,31 @@
 #   ~$ gh extension install nektos/gh-act
 #   ~$ gh act --env-file .env -s GITHUB_TOKEN=$GITHUB_TOKEN -s PULUMI_ACCESS_TOKEN=$PULUMI_ACCESS_TOKEN
 
-name: container
+name: Pulumi Devcontainer Build Status
 on:
     workflow_dispatch:
     push:
         branches:
         - main
         paths-ignore:
+        - 'devcontainer**'
+        - 'devcontainer/**'
         - '.devcontainer/**'
-        - '.vscode/**'
+        - '.pulumi/**'
+        - '.kube/**'
         - 'docs/**'
         - '**.md'
     pull_request:
-        branches:
-        - main
         paths-ignore:
+        - 'devcontainer**'
+        - 'devcontainer/**'
         - '.devcontainer/**'
-        - '.vscode/**'
+        - '.pulumi/**'
+        - '.kube/**'
         - 'docs/**'
         - '**.md'
+        branches:
+        - main
     schedule:
         - cron: '0 0 * * 0'
 
