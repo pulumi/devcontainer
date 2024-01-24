@@ -77,6 +77,7 @@ vim \
 git \
 tar \
 mosh \
+fish \
 file \
 wget \
 tree \
