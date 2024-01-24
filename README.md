@@ -4,7 +4,7 @@
 
 [![Pulumi Devcontainer Build Status](https://github.com/pulumi/devcontainer/actions/workflows/build.yaml/badge.svg)](https://github.com/pulumi/devcontainer/actions/workflows/build.yaml)
 
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/pulumi/devcontainer?quickstart=1)
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://bit.ly/pulumi-devcontainer-codespaces)
 
 This is a [Github Template Repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-repository-from-a-template) which provides a Pulumi [Devcontainer](https://code.visualstudio.com/docs/devcontainers/containers) together with GitOps ready boilerplate for quickly starting new Pulumi IaC projects.
 
