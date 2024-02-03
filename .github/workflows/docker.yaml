@@ -85,6 +85,22 @@ jobs:
           platforms: linux/amd64,linux/arm64
           tags: "ghcr.io/${{ steps.string-repository-to-lower.outputs.lowercase }}:slim,ghcr.io/${{ steps.string-repository-to-lower.outputs.lowercase }}:${{ github.sha }}"
 
+      - name: Build and Push Image pulumi/devcontainer:slim-node
+        uses: docker/build-push-action@v5
+        id: docker-build-push-slim-node
+        if: github.ref == 'refs/heads/main' || github.event_name == 'pull_request'
+        with:
+          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+          cache-from: |
+            type=registry,ref=ghcr.io/${{ steps.string-repository-to-lower.outputs.lowercase }}:build-cache
+            type=registry,ref=ghcr.io/${{ steps.string-repository-to-lower.outputs.lowercase }}:slim-cache
+            type=registry,ref=ghcr.io/${{ steps.string-repository-to-lower.outputs.lowercase }}:slim-node-cache
+          cache-to: type=registry,ref=ghcr.io/${{ steps.string-repository-to-lower.outputs.lowercase }}:build-cache,mode=max
+          context: .github/docker/slim-node
+          file: .github/docker/slim-node/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          tags: "ghcr.io/${{ steps.string-repository-to-lower.outputs.lowercase }}:slim-node,ghcr.io/${{ steps.string-repository-to-lower.outputs.lowercase }}:${{ github.sha }}"
+
       - name: Build and Push Image pulumi/devcontainer:hugo
         uses: docker/build-push-action@v5
         id: docker-build-push-hugo
@@ -93,6 +109,7 @@ jobs:
           push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
           cache-from: |
             type=registry,ref=ghcr.io/${{ steps.string-repository-to-lower.outputs.lowercase }}:build-cache
+            type=registry,ref=ghcr.io/${{ steps.string-repository-to-lower.outputs.lowercase }}:slim-node-cache
             type=registry,ref=ghcr.io/${{ steps.string-repository-to-lower.outputs.lowercase }}:hugo-cache
           cache-to: type=registry,ref=ghcr.io/${{ steps.string-repository-to-lower.outputs.lowercase }}:build-cache,mode=max
           context: .github/docker/hugo
