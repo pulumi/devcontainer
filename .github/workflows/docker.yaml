@@ -7,7 +7,6 @@
 #
 # Develop this workflow locally with the following command:
 #   ~$ gh act --env-file .env -s GITHUB_TOKEN=$GITHUB_TOKEN
-
 name: Build and Push Docker Images
 
 on:
@@ -16,49 +15,24 @@ on:
     branches:
       - main
     paths-ignore:
-      - "docs/**"
       - "Makefile"
-      - ".github/devcontainer**"
+      - "devcontainer**"
       - ".devcontainer/**"
+      - "docs/**"
       - "**.md"
   pull_request:
     branches:
       - main
     paths-ignore:
-      - "docs/**"
       - "Makefile"
-      - ".github/devcontainer**"
+      - "devcontainer**"
       - ".devcontainer/**"
+      - "docs/**"
       - "**.md"
 
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        include:
-          - context: slim
-            tags: slim
-          - context: hugo
-            tags: hugo
-          - context: slim-python
-            tags: slim-python
-          - context: slim-golang
-            tags: slim-golang
-          - context: slim-node
-            tags: slim-node
-          - context: slim-dotnet
-            tags: slim-dotnet
-          - context: slim-all
-            tags: slim-all
-          - context: base
-            tags: base
-          - context: docker-in-docker
-            tags: dind
-          - context: extra
-            tags: extra
-          - context: code-server
-            tags: code-server
     permissions:
       contents: read
       packages: write
@@ -74,24 +48,39 @@ jobs:
 
       - name: Install Docker Buildx
         uses: docker/setup-buildx-action@v3
-        id: buildx-install
+        id: docker-buildx-install
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
-        id: docker-login
+        id: docker-login-ghcr
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and Push Image
-        uses: docker/build-push-action@v5
-        id: docker-build-push
+      - name: repository_owner to lower case
+        uses: Entepotenz/change-string-case-action-min-dependencies@v1
+        id: string-owner-to-lower
         with:
-          context: .github/docker/${{ matrix.context }}
-          file: .github/docker/${{ matrix.context }}/Dockerfile
-          platforms: linux/amd64,linux/arm64
+          string: ${{ github.repository_owner }}
+
+      - name: Transform repository name to lower case
+        uses: Entepotenz/change-string-case-action-min-dependencies@v1
+        id: string-repository-to-lower
+        with:
+          string: ${{ github.repository }}
+
+      - name: Build and Push slim Image
+        uses: docker/build-push-action@v5
+        id: docker-build-push-slim
+        if: github.ref == 'refs/heads/main' || github.event_name == 'pull_request'
+        with:
           push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-          tags: ghcr.io/${{ github.repository_owner }}/${{ matrix.tags }}:latest,ghcr.io/${{ github.repository_owner }}/${{ matrix.tags }}:${{ github.sha }}
-          cache-from: type=registry,ref=ghcr.io/${{ github.repository_owner }}/${{ matrix.tags }}:cache
-          cache-to: type=registry,ref=ghcr.io/${{ github.repository_owner }}/${{ matrix.tags }}:cache,mode=max
+          cache-from: |
+            type=registry,ref=ghcr.io/${{ steps.string-repository-to-lower.outputs.lowercase }}:build-cache
+            type=registry,ref=ghcr.io/${{ steps.string-repository-to-lower.outputs.lowercase }}:slim
+          cache-to: type=registry,ref=ghcr.io/${{ steps.string-repository-to-lower.outputs.lowercase }}:build-cache,mode=max
+          context: .github/docker/slim
+          file: .github/docker/slim/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          tags: "ghcr.io/${{ steps.string-repository-to-lower.outputs.lowercase }}:latest,ghcr.io/${{ steps.string-repository-to-lower.outputs.lowercase }}:${{ github.sha }}"
