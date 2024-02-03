@@ -1,0 +1,4 @@
+[alias]
+    count = "ls-files --exclude-standard -- ':!:**/*.[pjs][npv]g' ':!:**/*.ai' ':!:.idea' ':!:**/*.eslintrc' ':!:package-lock.json' ':!:LICENSE'"
+[core]
+    excludesfile = /home/vscode/.gitignore

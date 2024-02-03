@@ -1,0 +1,97 @@
+##################################################################################
+# References:
+#   Built-in arguments:
+#   - https://docs.github.com/en/actions/learn-github-actions/contexts
+#   Built-in environment variables:
+#   - https://docs.github.com/en/enterprise-cloud@latest/actions/learn-github-actions/variables#default-environment-variables
+#
+# Develop this workflow locally with the following command:
+#   ~$ gh act --env-file .env -s GITHUB_TOKEN=$GITHUB_TOKEN
+
+name: Build and Push Docker Images
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - "docs/**"
+      - "Makefile"
+      - ".github/devcontainer**"
+      - ".devcontainer/**"
+      - "**.md"
+  pull_request:
+    branches:
+      - main
+    paths-ignore:
+      - "docs/**"
+      - "Makefile"
+      - ".github/devcontainer**"
+      - ".devcontainer/**"
+      - "**.md"
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - context: slim
+            tags: slim
+          - context: hugo
+            tags: hugo
+          - context: slim-python
+            tags: slim-python
+          - context: slim-golang
+            tags: slim-golang
+          - context: slim-node
+            tags: slim-node
+          - context: slim-dotnet
+            tags: slim-dotnet
+          - context: slim-all
+            tags: slim-all
+          - context: base
+            tags: base
+          - context: docker-in-docker
+            tags: dind
+          - context: extra
+            tags: extra
+          - context: code-server
+            tags: code-server
+    permissions:
+      contents: read
+      packages: write
+      actions: write
+    steps:
+      - name: Git Checkout
+        uses: actions/checkout@v4
+        id: git-checkout
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        id: qemu-install
+
+      - name: Install Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        id: buildx-install
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        id: docker-login
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and Push Image
+        uses: docker/build-push-action@v5
+        id: docker-build-push
+        with:
+          context: .github/docker/${{ matrix.context }}
+          file: .github/docker/${{ matrix.context }}/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+          tags: ghcr.io/${{ github.repository_owner }}/${{ matrix.tags }}:latest,ghcr.io/${{ github.repository_owner }}/${{ matrix.tags }}:${{ github.sha }}
+          cache-from: type=registry,ref=ghcr.io/${{ github.repository_owner }}/${{ matrix.tags }}:cache
+          cache-to: type=registry,ref=ghcr.io/${{ github.repository_owner }}/${{ matrix.tags }}:cache,mode=max

@@ -9,19 +9,19 @@
 This is a [Github Template Repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-repository-from-a-template) which provides a Pulumi [Devcontainer](https://code.visualstudio.com/docs/devcontainers/containers) together with GitOps ready boilerplate for quickly starting new Pulumi IaC projects.
 
 The Pulumi [Devcontainer](https://code.visualstudio.com/docs/devcontainers/containers) is designed with deep [VS Code](https://code.visualstudio.com) and [Github Codespaces](https://github.com/features/codespaces) integration to streamline a common Pulumi IaC and Provider development environment. dependencies and prerequisites as much as possible using [Dev Containers](https://containers.dev/) to prepare your development environment, or even just run your development directly in the browser with [Github CodeSpaces](https://github.com/features/codespaces).
-
+![Devcontainer](.github/assets/devcontainer.png)
 ![CodeSpaces Screenshot](./.github/assets/codespaces.png)
 
 # Getting Started
 
 With multiple ways to get started, it is a good idea to briefly review:
 
-- [Getting Started](#getting-started)
-- [Git Submodule](#git-submodule)
-- [Github CodeSpaces](#github-codespaces)
-- [VS Code Dev Container](#vs-code-dev-container)
-- [First time setup](#first-time-setup)
 - [Pulumi Dev Container](#pulumi-dev-container)
+- [Getting Started](#getting-started)
+- [Github CodeSpaces](#github-codespaces)
+  - [First time setup](#first-time-setup)
+- [VS Code Dev Container](#vs-code-dev-container)
+- [Git Submodule](#git-submodule)
 
 # Github CodeSpaces
 
