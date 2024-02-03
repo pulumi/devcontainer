@@ -70,7 +70,7 @@ jobs:
         with:
           string: ${{ github.repository }}
 
-      - name: Build and Push slim Image
+      - name: Build and Push Image pulumi/devcontainer:slim
         uses: docker/build-push-action@v5
         id: docker-build-push-slim
         if: github.ref == 'refs/heads/main' || github.event_name == 'pull_request'
@@ -78,9 +78,24 @@ jobs:
           push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
           cache-from: |
             type=registry,ref=ghcr.io/${{ steps.string-repository-to-lower.outputs.lowercase }}:build-cache
-            type=registry,ref=ghcr.io/${{ steps.string-repository-to-lower.outputs.lowercase }}:slim
+            type=registry,ref=ghcr.io/${{ steps.string-repository-to-lower.outputs.lowercase }}:slim-cache
           cache-to: type=registry,ref=ghcr.io/${{ steps.string-repository-to-lower.outputs.lowercase }}:build-cache,mode=max
           context: .github/docker/slim
           file: .github/docker/slim/Dockerfile
           platforms: linux/amd64,linux/arm64
-          tags: "ghcr.io/${{ steps.string-repository-to-lower.outputs.lowercase }}:latest,ghcr.io/${{ steps.string-repository-to-lower.outputs.lowercase }}:${{ github.sha }}"
+          tags: "ghcr.io/${{ steps.string-repository-to-lower.outputs.lowercase }}:slim,ghcr.io/${{ steps.string-repository-to-lower.outputs.lowercase }}:${{ github.sha }}"
+
+      - name: Build and Push Image pulumi/devcontainer:hugo
+        uses: docker/build-push-action@v5
+        id: docker-build-push-hugo
+        if: github.ref == 'refs/heads/main' || github.event_name == 'pull_request'
+        with:
+          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+          cache-from: |
+            type=registry,ref=ghcr.io/${{ steps.string-repository-to-lower.outputs.lowercase }}:build-cache
+            type=registry,ref=ghcr.io/${{ steps.string-repository-to-lower.outputs.lowercase }}:hugo-cache
+          cache-to: type=registry,ref=ghcr.io/${{ steps.string-repository-to-lower.outputs.lowercase }}:build-cache,mode=max
+          context: .github/docker/hugo
+          file: .github/docker/hugo/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          tags: "ghcr.io/${{ steps.string-repository-to-lower.outputs.lowercase }}:hugo,ghcr.io/${{ steps.string-repository-to-lower.outputs.lowercase }}:${{ github.sha }}"
