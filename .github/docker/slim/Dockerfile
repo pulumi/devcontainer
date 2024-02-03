@@ -42,7 +42,7 @@ ENV apt_update="sudo apt-get update"
 ENV apt_install="TERM=linux DEBIAN_FRONTEND=noninteractive sudo apt-get install -q --yes --purge --assume-yes --auto-remove --allow-downgrades -o Dpkg::Options::='--force-confdef' -o Dpkg::Options::='--force-confold'"
 ENV apt_clean="sudo apt-get clean && sudo apt-get autoremove -y && sudo apt-get purge -y --auto-remove"
 ENV curl="/usr/bin/curl --silent --show-error --tlsv1.2 --location"
-ENV curl_github="/usr/bin/curl --silent --show-error --tlsv1.2 --request GET --header \"Authorization: Bearer $GITHUB_TOKEN\" --header \"X-GitHub-Api-Version: 2022-11-28\" --url --location"
+ENV curl_github="/usr/bin/curl --silent --show-error --tlsv1.2 --request GET --url --location"
 ENV dir_clean="\
 sudo rm -rf \
 /var/lib/{apt,cache,log} \
