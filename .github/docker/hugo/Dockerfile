@@ -4,7 +4,7 @@
 # - docker run --rm -d --name devcontainer --hostname devcontainer ghcr.io/pulumi/devcontainer:hugo
 ###############################################################################
 # Based from the Pulumi Devcontainer SLIM image.
-FROM ghcr.io/pulumi/devcontainer:slim-node
+FROM ghcr.io/pulumi/devcontainer:slim-all
 
 #################################################################################
 # Image Metadata
