@@ -168,11 +168,11 @@ run_ttyd() {
 
 # Base Variables
 export dir_platform=".platform"
-export ssh_host_identity_path="/home/${USER}/${dir_platform}/secrets/ssh/host"
-export ssh_user_identity_path="/home/${USER}/${dir_platform}/secrets/ssh/user"
+export ssh_host_identity_path="/home/$USER/$dir_platform/secrets/ssh/host"
+export ssh_user_identity_path="/home/$USER/$dir_platform/secrets/ssh/user"
 
 # Validate environment variables
-if [ -z "${USER}" ]; then
+if [ -z "$USER" ]; then
     echo "Error: USER environment variable not set"
     exit 1
 fi
@@ -204,4 +204,7 @@ else
 fi
 
 run_tmux_keepalive "pulumi" > /dev/null 2>&1 &
+
+sleep 5 && devcontainer-links || true
+
 sleep infinity
