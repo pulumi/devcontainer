@@ -11,6 +11,20 @@ FROM ghcr.io/pulumi/devcontainer:slim-all
 #################################################################################
 LABEL tag="hugo"
 
+# Apt Packages
+ARG APT_PKGS="\
+chromium-browser \
+"
+# Apt Packages
+RUN echo \
+&& export TEST="gh version" \
+&& ${apt_update} \
+&& bash -c "${apt_install} --no-install-recommends -o Dpkg::Options::='--force-confold' ${APT_PKGS}" \
+&& bash -c "${apt_clean}" \
+&& ${dir_clean} \
+&& ${TEST} \
+&& echo
+
 # Install hugo
 EXPOSE 1313
 RUN set -ex \
