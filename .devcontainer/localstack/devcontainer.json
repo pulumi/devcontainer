@@ -1,5 +1,5 @@
 {
-  "name": "devcontainer-extra-gcp",
+  "name": "pulumi-localstack",
   "remoteUser": "vscode",
   "dockerFile": "Dockerfile",
   "init": true,
