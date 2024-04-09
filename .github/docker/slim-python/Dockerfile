@@ -14,6 +14,9 @@ LABEL tag="slim-python"
 # Install Programming Language Tooling
 # - python
 ARG APT_PKGS="\
+python3 \
+python3-venv \
+python3-dev \
 python3.11 \
 python3.11-venv \
 python3.11-dev \
