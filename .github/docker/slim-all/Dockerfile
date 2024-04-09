@@ -12,18 +12,17 @@ LABEL tag="slim-all"
 
 #################################################################################
 # Install Programming Language Tooling
-# - golang
-# - nodejs
 # - python
-# - dotnet
 #################################################################################
 # Python
 ARG APT_PKGS="\
-python3 \
+python3.11 \
+python3.11-venv \
+python3.11-dev \
 python3-pip \
-python3-venv \
 "
 RUN echo \
+&& bash -c "${apt_update}" \
 && bash -c "${apt_install} ${APT_PKGS}" \
 && bash -c "${apt_clean}" \
 && sudo update-alternatives --install \

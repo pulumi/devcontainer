@@ -14,9 +14,10 @@ LABEL tag="slim-python"
 # Install Programming Language Tooling
 # - python
 ARG APT_PKGS="\
-python3 \
+python3.11 \
+python3.11-venv \
+python3.11-dev \
 python3-pip \
-python3-venv \
 "
 RUN echo \
 && bash -c "${apt_install} ${APT_PKGS}" \
